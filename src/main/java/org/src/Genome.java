@@ -13,6 +13,8 @@ import java.util.HashSet;
 public class Genome {
     private final ArrayList<Gene> genes = new ArrayList<>();
     private final HashSet<String> VALID_CHROMOSOMES = new HashSet<>();
+
+    private HashMap<String, HashMap<Boolean, IntervalTree<Gene>>> intervalTreeMap = new HashMap<>();
     public Genome() {
         initValidChrs();
     }
@@ -86,6 +88,8 @@ public class Genome {
     }
 
     public void readGTF(String pathToGtf) throws IOException {
+        // DELETE
+        Boolean frtrand = null;
         // sanity check vars
         Gene lastGene = null;
         int exonCounter = 0;
@@ -123,6 +127,25 @@ public class Genome {
                 char strand = mainComponents[6].charAt(0);
                 lastGene = new Gene(newGeneId, geneStart, geneEnd, geneName, chr, strand, bioType);
                 genes.add(lastGene);
+
+                // Here IntervalTree
+                // if frstrand == null → just create one tree
+                boolean isNegative = strand == '-';
+                if (!intervalTreeMap.containsKey(chr)) {
+                    intervalTreeMap.put(chr, new HashMap<>());
+                }
+                if (frtrand == null) {
+                    if (!intervalTreeMap.get(chr).containsKey(null)) {
+                        intervalTreeMap.get(chr).put(null, new IntervalTree<>());
+                    }
+                    intervalTreeMap.get(chr).get(null).add(lastGene);
+
+                } else {
+                    if (!intervalTreeMap.get(chr).containsKey(isNegative)) {
+                        intervalTreeMap.get(chr).put(isNegative, new IntervalTree<>());
+                    }
+                    intervalTreeMap.get(chr).get(isNegative).add(lastGene);
+                }
                 continue;
             }
 
@@ -156,6 +179,11 @@ public class Genome {
             }
         }
     }
+
+    public HashMap<String, HashMap<Boolean, IntervalTree<Gene>>> getIntervalTreeMap() {
+        return intervalTreeMap;
+    }
+
 
     public ArrayList<Gene> getGenes() {
         return genes;

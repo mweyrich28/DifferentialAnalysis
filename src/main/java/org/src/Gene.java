@@ -137,5 +137,60 @@ public class Gene implements Interval {
         }
         return null;
     }
+
+
+    public void melt() {
+
+        ArrayList<Exon> allExons = new ArrayList<>();
+        for (Transcript transcript: transcriptList) {
+            allExons.addAll(transcript.getExonList());
+        }
+
+        Collections.sort(allExons, Comparator.comparingInt(Exon::getStart));
+        TreeSet<Region> meltedRegions = new TreeSet<>(
+                Comparator.comparingInt(Region::getStart)
+                        .thenComparingInt(Region::getStop)
+        );
+
+
+        if (!allExons.isEmpty()) {
+            Exon first = allExons.getFirst();
+            Region current = new Region(first.getStart(), first.getStop());
+
+            for (int i = 1; i < allExons.size(); i++) {
+                Exon exon = allExons.get(i);
+
+                if (exon.getStart() <= current.getStop() + 1) {
+                    current.setStop(Math.max(current.getStop(), exon.getStop()));
+                } else {
+                    meltedRegions.add(current);
+                    current = new Region(exon.getStart(), exon.getStop());
+                }
+            }
+
+            meltedRegions.add(current);
+        }
+        this.meltedRegions = meltedRegions;
+    }
+
+    public TreeSet<Region> getMeltedRegions() {
+        if (this.meltedRegions == null) {
+            melt();
+        }
+        return this.meltedRegions;
+    }
+
+    public int getMeltedLength() {
+        // make sure to only calculate once
+        if (this.meltedLength == 0) {
+            TreeSet<Region> meltedRegions = getMeltedRegions();
+            int length = 0;
+            for (Region region : meltedRegions) {
+                length += region.getStop() - region.getStart() - 1;
+            }
+            this.meltedLength = length;
+        }
+        return meltedLength;
+    }
 }
 

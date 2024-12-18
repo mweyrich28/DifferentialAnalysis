@@ -47,4 +47,80 @@ public class Transcript {
     public void reversExonList() {
         Collections.reverse(this.exonList);
     }
+
+    public ArrayList<Region> cut(int x1, int x2) {
+        ArrayList<Region> cutRegions = new ArrayList<>();
+        for (int i = 0; i < exonList.size(); i++) {
+            Exon exon;
+            if (strand == '-') {
+                exon = exonList.get(exonList.size() - 1 - i);
+            } else {
+                exon = exonList.get(i);
+            }
+
+            // #----------------#
+            //     <x1>----<x2>  → completely contained → add x1-x2 to set
+            if (x1 >= exon.getStart() && x1 <= exon.getStop() && x2 >= exon.getStart() && x2 <= exon.getStop()) {
+                cutRegions.add(new Region(x1, x2));
+                break;
+            }
+            // #----------------#
+            //     <x1>---------#
+            else if (x1 >= exon.getStart() && x1 <= exon.getStop()) {
+                cutRegions.add(new Region(x1, exon.getStop()));
+            }
+            // #----------------#
+            // #----------------#
+            else if (x1 <= exon.getStart() && x2 >= exon.getStop()) {
+                cutRegions.add(new Region(exon.getStart(), exon.getStop()));
+            }
+            // #----------------#
+            // #---------<x2>
+            else if (x2 >= exon.getStart() && x2 <= exon.getStop()) {
+                cutRegions.add(new Region(exon.getStart(), x2));
+                break;
+            }
+        }
+        return cutRegions;
+    }
+
+    public TreeSet<Region> cutSet(int x1, int x2) {
+        // same as cut() but returns treeSet → useful for transcripotmic annotation
+        TreeSet<Region> cutRegions = new TreeSet<>(
+                Comparator.comparingInt(Region::getStart)
+                        .thenComparingInt(Region::getStop)
+        );
+        for (int i = 0; i < exonList.size(); i++) {
+            Exon exon;
+            if (strand == '-') {
+                exon = exonList.get(exonList.size() - 1 - i);
+            } else {
+                exon = exonList.get(i);
+            }
+
+            // #----------------#
+            //     <x1>----<x2>  → completely contained → add x1-x2 to set
+            if (x1 >= exon.getStart() && x1 <= exon.getStop() && x2 >= exon.getStart() && x2 <= exon.getStop()) {
+                cutRegions.add(new Region(x1, x2));
+                break;
+            }
+            // #----------------#
+            //     <x1>---------#
+            else if (x1 >= exon.getStart() && x1 <= exon.getStop()) {
+                cutRegions.add(new Region(x1, exon.getStop()));
+            }
+            // #----------------#
+            // #----------------#
+            else if (x1 <= exon.getStart() && x2 >= exon.getStop()) {
+                cutRegions.add(new Region(exon.getStart(), exon.getStop()));
+            }
+            // #----------------#
+            // #---------<x2>
+            else if (x2 >= exon.getStart() && x2 <= exon.getStop()) {
+                cutRegions.add(new Region(exon.getStart(), x2));
+                break;
+            }
+        }
+        return cutRegions;
+    }
 }
