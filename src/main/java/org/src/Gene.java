@@ -2,7 +2,7 @@ package org.src;
 
 import augmentedTree.Interval;
 import augmentedTree.IntervalTree;
-import net.sf.samtools.AlignmentBlock;
+import net.sf.samtools.SAMRecord;
 
 import java.util.*;
 
@@ -18,8 +18,11 @@ public class Gene implements Interval {
     private final String chr;
     private final char strand;
     private TreeSet<Region> meltedRegions;
-    private final IntervalTree<Exon> exons = new IntervalTree<>();
+    private HashSet<SAMRecord> mappedReads = new HashSet<>();
     private final ArrayList<Intron> introns = new ArrayList<>();
+    private IntervalTree<Region> mappedAliBlocksTree = null;
+    private TreeSet<Region> mappedAliBlockSet = new TreeSet<>(Comparator.comparingInt(Region::getStart).thenComparingInt(Region::getStop));
+    private final IntervalTree<Region> gappedAliBlocksTree = new IntervalTree<>();
     public Gene(String geneId, int start, int end, String geneName, String chr, char strand, String bioType) {
         this.geneId = geneId;
         this.geneName = geneName;
@@ -191,6 +194,65 @@ public class Gene implements Interval {
             this.meltedLength = length;
         }
         return meltedLength;
+    }
+
+    public void addRead (SAMRecord read) {
+        this.mappedReads.add(read);
+
+    }
+
+    public void addAlignedBlocks(TreeSet<Region> blocks) {
+        if (blocks.size() == 4) {
+            System.out.println();
+        }
+        if (blocks.size() > 1) {
+            int count = 1;
+            int gapStart = 0;
+            int gapEnd;
+            for (Region r : blocks) {
+                if (count % 2 != 0) {
+                    gapStart = r.getStop() + 1;
+                    count++;
+                } else {
+                    gapEnd = r.getStart() - 1;
+                    Region gap = new Region(r.getId(), gapStart, gapEnd);
+                    gappedAliBlocksTree.add(gap);
+                    count = 1;
+                }
+
+                this.mappedAliBlockSet.add(new Region(r.getId(), r.getStart(), r.getStop()));
+            }
+            // add last gap if block had uneven length
+            if (count == 2) {
+                Region r = blocks.getLast();
+                gapEnd = r.getStart() - 1;
+                Region gap = new Region(gapStart, gapEnd);
+                gappedAliBlocksTree.add(gap);
+            }
+        }
+        else { // theres only one alignment block and no gaps
+            Region a = blocks.getLast();
+            this.mappedAliBlockSet.add(new Region(a.getId(), a.getStart(), a.getStop()));
+        }
+    }
+
+    public IntervalTree<Region> getMappedAliBlocksTree() {
+        if (this.mappedAliBlocksTree == null) {
+            this.mappedAliBlocksTree = new IntervalTree<>();
+            for (Region r : mappedAliBlockSet) {
+                mappedAliBlocksTree.add(r);
+            }
+            this.mappedAliBlockSet.clear();
+        }
+        return this.mappedAliBlocksTree;
+    }
+
+    public IntervalTree<Region> getGappedAliBlocksTree() {
+        return gappedAliBlocksTree;
+    }
+
+    public HashSet<SAMRecord> getMappedReads() {
+        return mappedReads;
     }
 }
 

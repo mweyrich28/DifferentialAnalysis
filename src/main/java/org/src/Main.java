@@ -23,6 +23,7 @@ public class Main {
 
             BamFeatures bam = new BamFeatures(bamPath, gtfPath);
             bam.processBAM(out);
+            bam.getPctSplicedCunts();
         } catch (ArgumentParserException e) {
             parser.printHelp();
         }

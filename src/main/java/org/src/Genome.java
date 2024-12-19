@@ -88,8 +88,6 @@ public class Genome {
     }
 
     public void readGTF(String pathToGtf) throws IOException {
-        // DELETE
-        Boolean frtrand = null;
         // sanity check vars
         Gene lastGene = null;
         int exonCounter = 0;
@@ -134,18 +132,10 @@ public class Genome {
                 if (!intervalTreeMap.containsKey(chr)) {
                     intervalTreeMap.put(chr, new HashMap<>());
                 }
-                if (frtrand == null) {
-                    if (!intervalTreeMap.get(chr).containsKey(null)) {
-                        intervalTreeMap.get(chr).put(null, new IntervalTree<>());
-                    }
-                    intervalTreeMap.get(chr).get(null).add(lastGene);
-
-                } else {
-                    if (!intervalTreeMap.get(chr).containsKey(isNegative)) {
-                        intervalTreeMap.get(chr).put(isNegative, new IntervalTree<>());
-                    }
-                    intervalTreeMap.get(chr).get(isNegative).add(lastGene);
+                if (!intervalTreeMap.get(chr).containsKey(isNegative)) {
+                    intervalTreeMap.get(chr).put(isNegative, new IntervalTree<>());
                 }
+                intervalTreeMap.get(chr).get(isNegative).add(lastGene);
                 continue;
             }
 

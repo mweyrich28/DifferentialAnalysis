@@ -13,14 +13,13 @@ public class ReadPair {
     private final int alignmentStart;
     private final int alignmentEnd;
     private final String chr;
+    private final String id;
     private final ArrayList<Gene> containingGenes = new ArrayList<>();
     private TreeSet<Region> regionVecFw = new TreeSet<>(Comparator.comparingInt(Region::getStart).thenComparingInt(Region::getStop));
     private TreeSet<Region> regionVecRw = new TreeSet<>(Comparator.comparingInt(Region::getStart).thenComparingInt(Region::getStop));
-    private int transcriptomicCount = 0;
-    private int mergedCount = 0;
-    private int intronCount = 0;
-    private int gCount;
-    private TreeSet<Region> meltedBlocks;
+//    private ArrayList<Region> regionVecFw = new ArrayList<>();
+//    private ArrayList<Region> regionVecRw = new ArrayList<>();
+//    private TreeSet<Region> meltedBlocks;
 
     public ReadPair(SAMRecord fw, SAMRecord rw, Boolean frstrand) {
         this.fwRecord = fw;
@@ -29,6 +28,7 @@ public class ReadPair {
         this.alignmentStart = Math.min(fw.getAlignmentStart(), rw.getAlignmentStart());
         this.alignmentEnd = Math.max(fw.getAlignmentEnd(), rw.getAlignmentEnd());
         this.chr = fw.getReferenceName();
+        this.id = fw.getReadName();
         melt();
     }
 
@@ -176,70 +176,27 @@ public class ReadPair {
         return minDistance - 1;
     }
 
-    public String annotateRegion() {
+    public ArrayList<Gene> getTranscriptomicGenes() {
+        ArrayList<Gene> transcriptomicGenes = new ArrayList<>();
         // go through all genes
         for (Gene gene : containingGenes) {
             // check transcriptopmic
-            ArrayList<Transcript> transcriptomicTranscripts = findTranscriptomicTranscripts(gene);
-
-            // TODO: CONTINUE
-            // handle result
-            if (transcriptomic != null) {
-                if (!annotationTranscriptomic.isEmpty()) {
-                    annotationTranscriptomic.append("|" + transcriptomic);
-                    this.transcriptomicCount += 1;
-                    continue;
-                } else {
-                    annotationTranscriptomic.append(transcriptomic);
-                    this.transcriptomicCount += 1;
-                    continue;
-                }
+            if (!isTranscriptomicGene(gene)) {
+                continue;
             }
 
-
-            // check merged
-            String merged = findMerged(gene);
-            // handle result
-            if (merged != null) {
-                if (!annotationMerged.isEmpty()) {
-                    annotationMerged.append("|" + merged);
-                    this.mergedCount += 1;
-                    continue;
-                } else {
-                    annotationMerged.append(merged);
-                    this.mergedCount += 1;
-                    continue;
-                }
-            }
-
-            // if not transcriptomic / merged → intronic
-            // handle intronic
-            if (!annotationIntronic.isEmpty()) {
-                annotationIntronic.append("|" + gene.getGeneId() + "," + gene.getBioType() + ":INTRON");
-                this.intronCount += 1;
-            } else {
-                annotationIntronic.append(gene.getGeneId() + "," + gene.getBioType() + ":INTRON");
-                this.intronCount += 1;
-            }
+            // add reads to gene
+            gene.addAlignedBlocks(this.regionVecFw);
+            gene.addAlignedBlocks(this.regionVecRw);
+//            gene.addRead(this.fwRecord);
+//            gene.addRead(this.rwRecord);
+            transcriptomicGenes.add(gene);
         }
 
-        // priority → return in order transcriptomic > merged > intronic
-        // gCount is updated correspondingly and later written to result
-        if (transcriptomicCount != 0) {
-            this.gCount = transcriptomicCount;
-            return annotationTranscriptomic.toString();
-        } else if (mergedCount != 0) {
-            this.gCount = mergedCount;
-            return annotationMerged.toString();
-        } else {
-            this.gCount = intronCount;
-            return annotationIntronic.toString();
-        }
+        return transcriptomicGenes;
     }
 
-    public ArrayList<Transcript> findTranscriptomicTranscripts(Gene gene) {
-        boolean foundTranscript = false;
-        ArrayList<Transcript> transcripts = new ArrayList<>();
+    public boolean isTranscriptomicGene(Gene gene) {
         for (Transcript transcript : gene.getTranscriptList()) {
             // cut fwx1 fwx2 from transcript exons
             TreeSet<Region> cutFwRegions = transcript.cutSet(fwRecord.getAlignmentStart(), fwRecord.getAlignmentEnd());
@@ -260,42 +217,33 @@ public class ReadPair {
                 }
 
                 if (cutRwRegions.equals(regionVecRw)) {
-                    transcripts.add(transcript);
+                    return true;
                 }
             }
         }
-
-        if (foundTranscript) {
-            return transcripts;
-        } else {
-            return null;
-        }
+        return false;
     }
 
-    public String findMerged(Gene gene) {
-        TreeSet<Region> mergedTranscriptome = gene.getMeltedRegions();
-        TreeSet<Region> mergedRead = this.meltedBlocks;
-
-        int count = 0;
-        // brute force this one
-        for (Region region : mergedRead) {
-            for (Region transcriptRegion : mergedTranscriptome) {
-                if (transcriptRegion.contains(region)) {
-                    count++;
-                    break;
-                }
-            }
-        }
-
-        if (!(count == mergedRead.size())) {
-            return null;
-        }
-        return gene.getGeneId() + "," + gene.getBioType() + ":MERGED";
-    }
-
-    public int getgCount() {
-        return gCount;
-    }
+//    public String findMerged(Gene gene) {
+//        TreeSet<Region> mergedTranscriptome = gene.getMeltedRegions();
+//        TreeSet<Region> mergedRead = this.meltedBlocks;
+//
+//        int count = 0;
+//        // brute force this one
+//        for (Region region : mergedRead) {
+//            for (Region transcriptRegion : mergedTranscriptome) {
+//                if (transcriptRegion.contains(region)) {
+//                    count++;
+//                    break;
+//                }
+//            }
+//        }
+//
+//        if (!(count == mergedRead.size())) {
+//            return null;
+//        }
+//        return gene.getGeneId() + "," + gene.getBioType() + ":MERGED";
+//    }
 
     public boolean isAntisense(Genome genome) {
         ArrayList<Gene> cgenes;
@@ -308,9 +256,9 @@ public class ReadPair {
         return !(cgenes.isEmpty());
     }
 
-    public TreeSet<Region> getMeltedBlocks() {
-        return this.meltedBlocks;
-    }
+//    public TreeSet<Region> getMeltedBlocks() {
+//        return this.meltedBlocks;
+//    }
 
     public void melt() {
         // melt all regions fw, rw, and merged)
@@ -323,7 +271,7 @@ public class ReadPair {
         allBlocks.addAll(rwBlocks);
         this.regionVecFw = meltRegion(fwBlocks);
         this.regionVecRw = meltRegion(rwBlocks);
-        this.meltedBlocks = meltRegion(allBlocks);
+//        this.meltedBlocks = meltRegion(allBlocks);
     }
 
     public TreeSet<Region> meltRegion(ArrayList<AlignmentBlock> blocks) {
@@ -333,12 +281,12 @@ public class ReadPair {
                         .thenComparingInt(Region::getStop)
         );
         if (blocks.size() == 1) {
-            melted.add(new Region(blocks.getFirst().getReferenceStart(), blocks.getFirst().getReferenceStart() + blocks.getFirst().getLength() - 1));
+            melted.add(new Region(this.id, blocks.getFirst().getReferenceStart(), blocks.getFirst().getReferenceStart() + blocks.getFirst().getLength() - 1));
             return melted;
         }
         Collections.sort(blocks, Comparator.comparingInt(AlignmentBlock::getReferenceStart));
         AlignmentBlock first = blocks.getFirst();
-        Region current = new Region(first.getReferenceStart(), first.getReferenceStart() + first.getLength() - 1);
+        Region current = new Region(this.id, first.getReferenceStart(), first.getReferenceStart() + first.getLength() - 1);
 
         for (int i = 1; i < blocks.size(); i++) {
             AlignmentBlock block = blocks.get(i);
@@ -346,7 +294,7 @@ public class ReadPair {
                 current.setStop(Math.max(current.getStop(), block.getReferenceStart() + block.getLength() - 1));
             } else {
                 melted.add(current);
-                current = new Region(block.getReferenceStart(), block.getReferenceStart() + block.getLength() - 1);
+                current = new Region(this.id, block.getReferenceStart(), block.getReferenceStart() + block.getLength() - 1);
             }
         }
 

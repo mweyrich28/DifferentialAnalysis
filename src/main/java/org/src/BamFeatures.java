@@ -1,12 +1,9 @@
 package org.src;
 
 import augmentedTree.IntervalTree;
-import com.sun.source.tree.Tree;
 import net.sf.samtools.*;
 
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
@@ -15,9 +12,7 @@ public class BamFeatures {
     private final SAMFileReader samReader;
     private final Genome genome;
 
-    private final IntervalTree<Region> readBlocks = new IntervalTree<>();
-    private final IntervalTree<Region> readSpaces = new IntervalTree<>();
-    private final HashSet<String> mappedTranscripts = new HashSet<>();
+    private final HashSet<Gene> mappedGenes = new HashSet();
 
     public BamFeatures(String pathToBAM, String pathToGTF) throws IOException {
         this.genome = new Genome();
@@ -32,8 +27,8 @@ public class BamFeatures {
         File outFile = new File(outPath);
         File parentDir = outFile.getParentFile();
         parentDir.mkdirs();
-        BufferedWriter bufferedWriter = new BufferedWriter(new FileWriter(outPath));
         String currentChr = null;
+
         while (it.hasNext()) {
             SAMRecord current = it.next();
 
@@ -63,12 +58,15 @@ public class BamFeatures {
             SAMRecord mate = seenEntries.get(current.getReadName());
             // init readpair with its correct strandness
             Boolean frstrand = null;
-            ReadPair pair = determineReadPair(mate, current, frstrand);
+//            ReadPair pair = determineReadPair(mate, current, mate.getMateNegativeStrandFlag());
+            ReadPair pair;
+            if (mate.getFirstOfPairFlag()) {
+                pair = new ReadPair(mate, current, !mate.getMateNegativeStrandFlag());
+            } else {
+                pair = new ReadPair(current, mate, !current.getMateNegativeStrandFlag());
+            }
 
-            // append read id to sb
-            StringBuilder sb = new StringBuilder(current.getReadName());
             int cgenes = pair.getcgenes(genome);
-            int gdist = 0;
 
             if (cgenes == 0) {
                 int igenes = pair.getigenes(genome);
@@ -77,17 +75,22 @@ public class BamFeatures {
                 }
             }
 
+            // check for split inconsistency
             int nsplit = pair.getNsplit();
             if (nsplit == -1) {
                 continue;
             }
             // update count based on annotation
-            String annotation = pair.annotateRegion();
-            cgenes = pair.getgCount();
-
+            ArrayList<Gene> transcriptomicGenes = pair.getTranscriptomicGenes();
+            // skip if empty
+            if (transcriptomicGenes.isEmpty()) {
+                continue;
+            }
+            mappedGenes.addAll(transcriptomicGenes);
         }
-
-        for (Gene g : genome.getGenes()) {
+    }
+    public void getPctSplicedCunts() {
+        for (Gene g : mappedGenes) {
             if (g.getStrand() == '-') {
                 g.invertTranscripts();
             }
@@ -96,16 +99,45 @@ public class BamFeatures {
 //            if (g.getGeneId().equals("ENSG00000158109.10")) {
 //                System.out.println();
 //            }
+//            if (g.getGeneId().equals("ENSG00000142634.8")) {
+//                System.out.println();
+//            }
+            if (g.getGeneId().equals("ENSG00000132881.7")) {
+                System.out.println();
+            }
+//            if (g.getGeneId().equals("ENSG00000158195.6")) {
+//                System.out.println();
+//            }
+//            if (g.getGeneId().equals("ENSG00000198483.8")) {
+//                System.out.println();
+//            }
+//            if (g.getGeneId().equals("ENSG00000196407.7")) {
+//                System.out.println();
+//            }
+//            if (g.getGeneId().equals("ENSG00000158195.6")) {
+//                System.out.println();
+//            }
 
             ArrayList<Exon> skippedExons = g.getSkippedExons();
 
             if (skippedExons == null) {
                 continue;
             }
-            for (Exon skippedExon : skippedExons) {
-                System.out.println(g.getGeneId() + " " + skippedExon.getStart() + "-" + skippedExon.getStop());
-            }
 
+            IntervalTree<Region> mappedAliReadsTree = g.getMappedAliBlocksTree();
+            IntervalTree<Region> gappedAliReadsTree = g.getGappedAliBlocksTree();
+
+            for (Exon skippedExon : skippedExons) {
+                ArrayList<Region> inclusionReads = mappedAliReadsTree.getIntervalsSpannedBy(skippedExon.getStart(), skippedExon.getStop(), new ArrayList<>());
+                HashSet<Region> exclusionReads = gappedAliReadsTree.getIntervalsSpanning(skippedExon.getStart(), skippedExon.getStop(), new HashSet<>());
+
+                // skipp unmapped exons
+                if(inclusionReads.isEmpty()) {
+                    continue;
+                }
+                int total = inclusionReads.size() + exclusionReads.size();
+                System.out.println(g.getGeneId() + " " + skippedExon.getStart() + "-" + skippedExon.getStop()+ " " + inclusionReads.size() + " " + exclusionReads.size() + " " + total);
+            }
         }
     }
     public boolean flagCheck(SAMRecord record) {

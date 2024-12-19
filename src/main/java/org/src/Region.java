@@ -5,8 +5,15 @@ import augmentedTree.Interval;
 public class Region implements Interval {
     private int start;
     private int stop;
+    private String id;
 
     public Region(int start, int end) {
+        this.start = start;
+        this.stop = end;
+    }
+
+    public Region(String id, int start, int end) {
+        this.id = id;
         this.start = start;
         this.stop = end;
     }
@@ -31,7 +38,7 @@ public class Region implements Interval {
 
     @Override
     public String toString() {
-        return getStart() + "-" + getStop();
+        return getId() + ": " + getStart() + "-" + getStop();
     }
 
     @Override
@@ -39,6 +46,7 @@ public class Region implements Interval {
         int result = 17;
         result = 31 * result + start;
         result = 31 * result + stop;
+        result = 31 * result + (id != null ? id.hashCode() : 0);
         return result;
     }
     @Override
@@ -50,5 +58,9 @@ public class Region implements Interval {
     }
     public boolean contains(Region other) {
         return this.start <= other.start && this.stop >= other.stop;
+    }
+
+    public String getId() {
+        return id;
     }
 }

@@ -7,8 +7,6 @@ public class Exon implements Interval {
     private final int start;
     private final int stop;
     private int pos;
-    private int IRC;
-    private int ERC;
     private String transcriptId;
 
     public Exon(int start, int end, int pos, int length) {
@@ -41,4 +39,5 @@ public class Exon implements Interval {
     public int getLength() {
         return length;
     }
+
 }
