@@ -21,7 +21,8 @@ public class Gene implements Interval {
     private HashSet<SAMRecord> mappedReads = new HashSet<>();
     private final ArrayList<Intron> introns = new ArrayList<>();
     private IntervalTree<Region> mappedAliBlocksTree = null;
-    private TreeSet<Region> mappedAliBlockSet = new TreeSet<>(Comparator.comparingInt(Region::getStart).thenComparingInt(Region::getStop));
+//    private TreeSet<Region> mappedAliBlockSet = new TreeSet<>(Comparator.comparingInt(Region::getStart).thenComparingInt(Region::getStop));
+    private ArrayList<Region> mappedAliBlockSet = new ArrayList<>();
     private final IntervalTree<Region> gappedAliBlocksTree = new IntervalTree<>();
     public Gene(String geneId, int start, int end, String geneName, String chr, char strand, String bioType) {
         this.geneId = geneId;
@@ -202,9 +203,6 @@ public class Gene implements Interval {
     }
 
     public void addAlignedBlocks(TreeSet<Region> blocks) {
-        if (blocks.size() == 4) {
-            System.out.println();
-        }
         if (blocks.size() > 1) {
             int count = 1;
             int gapStart = 0;
@@ -226,7 +224,7 @@ public class Gene implements Interval {
             if (count == 2) {
                 Region r = blocks.getLast();
                 gapEnd = r.getStart() - 1;
-                Region gap = new Region(gapStart, gapEnd);
+                Region gap = new Region(r.getId(), gapStart, gapEnd);
                 gappedAliBlocksTree.add(gap);
             }
         }

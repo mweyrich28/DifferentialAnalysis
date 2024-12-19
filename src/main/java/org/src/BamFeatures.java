@@ -3,7 +3,10 @@ package org.src;
 import augmentedTree.IntervalTree;
 import net.sf.samtools.*;
 
+import javax.swing.*;
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
 import java.io.IOException;
 import java.util.*;
 
@@ -21,12 +24,9 @@ public class BamFeatures {
         this.samReader.setValidationStringency(SAMFileReader.ValidationStringency.SILENT);
     }
 
-    public void processBAM(String outPath) throws IOException {
+    public void processBAM() throws IOException {
         Iterator<SAMRecord> it = samReader.iterator();
         HashMap<String, SAMRecord> seenEntries = new HashMap<>();
-        File outFile = new File(outPath);
-        File parentDir = outFile.getParentFile();
-        parentDir.mkdirs();
         String currentChr = null;
 
         while (it.hasNext()) {
@@ -56,8 +56,6 @@ public class BamFeatures {
             // at this point we already have the read pair
             // get mate
             SAMRecord mate = seenEntries.get(current.getReadName());
-            // init readpair with its correct strandness
-            Boolean frstrand = null;
 //            ReadPair pair = determineReadPair(mate, current, mate.getMateNegativeStrandFlag());
             ReadPair pair;
             if (mate.getFirstOfPairFlag()) {
@@ -65,6 +63,9 @@ public class BamFeatures {
             } else {
                 pair = new ReadPair(current, mate, !current.getMateNegativeStrandFlag());
             }
+//            if (mate.getReadName().equals("921")) {
+//                System.out.println();
+//            }
 
             int cgenes = pair.getcgenes(genome);
 
@@ -89,12 +90,22 @@ public class BamFeatures {
             mappedGenes.addAll(transcriptomicGenes);
         }
     }
-    public void getPctSplicedCunts() {
+
+    public void getPctSplicedCunts(String outPath) throws IOException {
+        File outFile = new File(outPath);
+        File parentDir = outFile.getParentFile();
+        parentDir.mkdirs();
+        BufferedWriter br = new BufferedWriter(new FileWriter(outFile));
+        br.write("gene\texon\tnum_incl_reads\tnum_excl_reads\tnum_total_reads\tpsi");
         for (Gene g : mappedGenes) {
             if (g.getStrand() == '-') {
                 g.invertTranscripts();
             }
             g.generateIntrons();
+
+            if (g.getGeneId().equals("ENSG00000001167.10")) {
+                System.out.println();
+            }
 
 //            if (g.getGeneId().equals("ENSG00000158109.10")) {
 //                System.out.println();
@@ -102,7 +113,7 @@ public class BamFeatures {
 //            if (g.getGeneId().equals("ENSG00000142634.8")) {
 //                System.out.println();
 //            }
-            if (g.getGeneId().equals("ENSG00000132881.7")) {
+            if (g.getGeneId().equals("ENSG00000198483.8")) {
                 System.out.println();
             }
 //            if (g.getGeneId().equals("ENSG00000158195.6")) {
@@ -129,17 +140,59 @@ public class BamFeatures {
 
             for (Exon skippedExon : skippedExons) {
                 ArrayList<Region> inclusionReads = mappedAliReadsTree.getIntervalsSpannedBy(skippedExon.getStart(), skippedExon.getStop(), new ArrayList<>());
+                HashSet<String> incUniq = new HashSet<>();
+                for (Region region : inclusionReads) {
+                    incUniq.add(region.getId());
+                }
+                // skip unmapped exons
                 HashSet<Region> exclusionReads = gappedAliReadsTree.getIntervalsSpanning(skippedExon.getStart(), skippedExon.getStop(), new HashSet<>());
 
-                // skipp unmapped exons
-                if(inclusionReads.isEmpty()) {
-                    continue;
-                }
-                int total = inclusionReads.size() + exclusionReads.size();
-                System.out.println(g.getGeneId() + " " + skippedExon.getStart() + "-" + skippedExon.getStop()+ " " + inclusionReads.size() + " " + exclusionReads.size() + " " + total);
+                int total = incUniq.size() + exclusionReads.size();
+                double pct = (double) incUniq.size() / total;
+                br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+
+//                if (g.getGeneId().equals("ENSG00000158109.10")) {
+//                    System.out.println();
+//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000142634.8")) {
+//                    System.out.println();
+//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000132881.7")) {
+//                    System.out.println();
+//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000158195.6")) {
+//                    System.out.println();
+//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000198483.8")) {
+//                    System.out.println();
+//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000196407.7")) {
+//                    System.out.println();
+//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000158481.8")) {
+//                    System.out.println();
+//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000270149.1")) {
+//                    System.out.println();
+//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000117479.8")) {
+//                    System.out.println();
+//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+//                }
             }
         }
+        br.flush();
+        br.close();
     }
+
     public boolean flagCheck(SAMRecord record) {
         // ignore based on flags
         boolean isPrimary = !record.getNotPrimaryAlignmentFlag();

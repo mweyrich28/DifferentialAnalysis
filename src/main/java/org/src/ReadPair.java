@@ -197,6 +197,7 @@ public class ReadPair {
     }
 
     public boolean isTranscriptomicGene(Gene gene) {
+        int counter = 0;
         for (Transcript transcript : gene.getTranscriptList()) {
             // cut fwx1 fwx2 from transcript exons
             TreeSet<Region> cutFwRegions = transcript.cutSet(fwRecord.getAlignmentStart(), fwRecord.getAlignmentEnd());
@@ -217,9 +218,13 @@ public class ReadPair {
                 }
 
                 if (cutRwRegions.equals(regionVecRw)) {
-                    return true;
+                    counter++;
+//                    return true;
                 }
             }
+        }
+        if(counter == 1) {
+            return true;
         }
         return false;
     }

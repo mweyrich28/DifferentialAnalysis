@@ -6,11 +6,9 @@ import net.sourceforge.argparse4j.inf.ArgumentParserException;
 import net.sourceforge.argparse4j.inf.Namespace;
 import java.io.IOException;
 
-import static net.sourceforge.argparse4j.impl.Arguments.storeTrue;
-
 public class Main {
     public static void main(String[] args) throws IOException {
-        ArgumentParser parser = ArgumentParsers.newFor("BamFeatures").build().defaultHelp(true).description("Usage:\n\t-gtf <path-to-gtf>\n\t-o <path-to-out.annot>\n\t-bam <path-to-bam>\n\t[-frstrand <true/false>]\n\t-lengths");
+        ArgumentParser parser = ArgumentParsers.newFor("PsiCounter").build().defaultHelp(true).description("Usage:\n\t-gtf <path-to-gtf>\n\t-o <path-to-out.psi>\n\t-bam <path-to-bam>");
         try {
             parser.addArgument("-gtf").required(true).help("Path to Gene Transfer Format File.");
             parser.addArgument("-bam").required(true).help("Path to Bam File.");
@@ -22,8 +20,8 @@ public class Main {
             String bamPath = ns.getString("bam");
 
             BamFeatures bam = new BamFeatures(bamPath, gtfPath);
-            bam.processBAM(out);
-            bam.getPctSplicedCunts();
+            bam.processBAM();
+            bam.getPctSplicedCunts(out);
         } catch (ArgumentParserException e) {
             parser.printHelp();
         }

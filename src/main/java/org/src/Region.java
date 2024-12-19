@@ -56,6 +56,14 @@ public class Region implements Interval {
         Region region = (Region) obj;
         return start == region.start && stop == region.stop;
     }
+//    @Override
+//    public boolean equals(Object obj) {
+//        if (this == obj) return true;
+//        if (obj == null || getClass() != obj.getClass()) return false;
+//        Region region = (Region) obj;
+//        return start == region.start && stop == region.stop &&
+//                (id != null ? id.equals(region.id) : region.id == null);
+//    }
     public boolean contains(Region other) {
         return this.start <= other.start && this.stop >= other.stop;
     }
