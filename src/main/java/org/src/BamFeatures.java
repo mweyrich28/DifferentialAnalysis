@@ -76,6 +76,7 @@ public class BamFeatures {
             if (nsplit == -1) {
                 continue;
             }
+
             ArrayList<Gene> transcriptomicGenes = pair.getTranscriptomicGenes();
             // skip if empty
             if (transcriptomicGenes.isEmpty()) {
@@ -106,29 +107,43 @@ public class BamFeatures {
             IntervalTree<Region> mappedAliReadsTree = g.getMappedAliBlocksTree();
             IntervalTree<Region> gappedAliReadsTree = g.getGappedAliBlocksTree();
 
+
             for (Exon skippedExon : skippedExons) {
                 ArrayList<Region> inclusionReads = mappedAliReadsTree.getIntervalsSpannedBy(skippedExon.getStart(), skippedExon.getStop(), new ArrayList<>());
                 HashSet<String> incUniq = new HashSet<>();
+                int incUniqCount = 0;
                 for (Region region : inclusionReads) {
                     incUniq.add(region.getId());
                 }
+
+                incUniqCount = incUniq.size();
                 // skip unmapped exons
                 HashSet<Region> exclusionReads = gappedAliReadsTree.getIntervalsSpanning(skippedExon.getStart(), skippedExon.getStop(), new HashSet<>());
                 HashSet<String> excUniq = new HashSet<>();
+
+                HashSet<String> specialReads = new HashSet<>();
                 for (Region region : exclusionReads) {
                     if (region.getTranscriptId().equals(skippedExon.getTranscriptId()) && region.getType().equals("GAP BETWEEN 2 READS")) {
+                        specialReads.add(region.getId());
                         continue;
                     }
                     excUniq.add(region.getId());
                 }
 
+                // handle specific edge case where a skipped exon is not mapped directly by alignment block
+                // but read pair is the only one explaining said transcript
+                specialReads.removeAll(incUniq);
+                int numSpecialreads = specialReads.size();
+                incUniqCount += numSpecialreads;
+
                 if (incUniq.isEmpty() && excUniq.isEmpty()) {
                     continue;
                 }
 
+
                 // maybe store infromation about what transcript was matched in read and also in exon?
-                int total = incUniq.size() + excUniq.size();
-                double pct = (double) incUniq.size() / total;
+                int total = incUniqCount + excUniq.size();
+                double pct = (double) incUniqCount / total;
 
 
                 // exons in sample1 which shouldn't exist (but i find them)
@@ -150,26 +165,7 @@ public class BamFeatures {
                 if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000079689.9\t25682179-25682235")) {
                     continue;
                 }
-
-                // here come the really weird edge cases :)
-                // Sample 3, 4, 6 wrong incl count (21 vs 20) → also plotted this case...
-                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000186399.8\t30702432-30702471") && (outPath.contains("sample3.psi") || outPath.contains("sample4.psi") || outPath.contains("sample6.psi"))) {
-                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + 21 + "\t" + excUniq.size() + "\t" + (excUniq.size() + 21) + "\t" + ((double) 21 / (excUniq.size() + 21)));
-                    continue;
-                }
-                // Sample 6 wrong incl count (56 vs 55) → also plotted this case...
-                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000251283.1\t157557720-157557759") && (outPath.contains("sample6.psi"))) {
-                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + 56 + "\t" + excUniq.size() + "\t" + (excUniq.size() + 56) + "\t" + ((double) 56 / (excUniq.size() + 56)));
-                    continue;
-                }
-
-                // Sample 7 wrong incl count (17 vs 16) → also plotted this case...
-                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000186399.8\t30702432-30702471") && (outPath.contains("sample7.psi"))) {
-                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + 17 + "\t" + excUniq.size() + "\t" + (excUniq.size() + 17) + "\t" + ((double) 17 / (excUniq.size() + 17)));
-                    continue;
-                }
-
-                br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
+                br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniqCount + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
             }
         }
         br.flush();
