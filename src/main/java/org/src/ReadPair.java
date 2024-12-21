@@ -144,7 +144,7 @@ public class ReadPair {
         ArrayList<Gene> transcriptomicGenes = new ArrayList<>();
         // go through all genes
         for (Gene gene : containingGenes) {
-            // check transcriptomic
+            // check if read mapps to exacly one transcript
             if (!isTranscriptomicGene(gene)) {
                 continue;
             }
@@ -166,6 +166,9 @@ public class ReadPair {
 
     public boolean isTranscriptomicGene(Gene gene) {
         int counter = 0;
+        // variable to strore matched transcript
+        // if only one transcript matches read → add this Id to the read
+        String transcriptID = null;
         for (Transcript transcript : gene.getTranscriptList()) {
             // cut fwx1 fwx2 from transcript exons
             TreeSet<Region> cutFwRegions = transcript.cutSet(fwRecord.getAlignmentStart(), fwRecord.getAlignmentEnd());
@@ -187,36 +190,23 @@ public class ReadPair {
 
                 if (cutRwRegions.equals(regionVecRw)) {
                     counter++;
+                    transcriptID = transcript.getTranscriptId();
 //                    return true;
                 }
             }
         }
         if(counter == 1) {
+            for (Region r: regionVecFw) {
+                r.setTranscriptId(transcriptID);
+            }
+            for (Region r: regionVecRw) {
+                r.setTranscriptId(transcriptID);
+            }
             return true;
         }
         return false;
     }
 
-//    public String findMerged(Gene gene) {
-//        TreeSet<Region> mergedTranscriptome = gene.getMeltedRegions();
-//        TreeSet<Region> mergedRead = this.meltedBlocks;
-//
-//        int count = 0;
-//        // brute force this one
-//        for (Region region : mergedRead) {
-//            for (Region transcriptRegion : mergedTranscriptome) {
-//                if (transcriptRegion.contains(region)) {
-//                    count++;
-//                    break;
-//                }
-//            }
-//        }
-//
-//        if (!(count == mergedRead.size())) {
-//            return null;
-//        }
-//        return gene.getGeneId() + "," + gene.getBioType() + ":MERGED";
-//    }
 
     public boolean isAntisense(Genome genome) {
         ArrayList<Gene> cgenes;

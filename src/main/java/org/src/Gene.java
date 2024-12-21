@@ -130,6 +130,7 @@ public class Gene implements Interval {
                         ArrayList<Exon> exonList = currTranscript.getExonList();
                         for (int i = frontExon.getPos(); i < behindExon.getPos(); i++) {
                             if (i > frontExon.getPos() && i < behindExon.getPos()) {
+                                exonList.get(i).setTranscriptId(currTranscript.getTranscriptId());
                                 skippedExons.add(exonList.get(i));
                             }
                         }
@@ -155,6 +156,9 @@ public class Gene implements Interval {
         sorted.sort(Comparator.comparingInt((Region::getStart)));
         if (sorted.getFirst().getStop() < sorted.getLast().getStart()) {
             Region gap = new Region(sorted.getFirst().getId(), sorted.getFirst().getStop() + 1, sorted.getLast().getStart() - 1);
+            // annotate gap
+            gap.setTranscriptId(sorted.getFirst().getTranscriptId());
+            gap.setType("GAP BETWEEN 2 READS");
             this.gappedAliBlocksTree.add(gap);
         }
     }
@@ -171,6 +175,9 @@ public class Gene implements Interval {
                     } else {
                         gapEnd = r.getStart()-1;
                         Region gap = new Region(r.getId(), gapStart, gapEnd);
+                        // annotate gap
+                        gap.setTranscriptId(r.getTranscriptId());
+                        gap.setType("GAP");
                         gappedAliBlocksTree.add(gap);
                         gapStart = r.getStop() + 1;
 
@@ -179,6 +186,9 @@ public class Gene implements Interval {
                 } else {
                     gapEnd = r.getStart() - 1;
                     Region gap = new Region(r.getId(), gapStart, gapEnd);
+                    // annotate gap
+                    gap.setTranscriptId(r.getTranscriptId());
+                    gap.setType("GAP");
                     gappedAliBlocksTree.add(gap);
                     gapStart = r.getStop() + 1;
                     count = 1;
@@ -186,15 +196,8 @@ public class Gene implements Interval {
 
                 this.mappedAliBlockSet.add(new Region(r.getId(), r.getStart(), r.getStop()));
             }
-            // add last gap if block had uneven length
-//            if (count == 2) {
-//                Region r = blocks.getLast();
-//                gapEnd = r.getStart() - 1;
-//                Region gap = new Region(r.getId(), gapStart, gapEnd);
-//                gappedAliBlocksTree.add(gap);
-//            }
         }
-        else { // theres only one alignment block and no gaps
+        else { // there is only one alignment block and no gaps
             Region a = blocks.getLast();
             this.mappedAliBlockSet.add(new Region(a.getId(), a.getStart(), a.getStop()));
         }

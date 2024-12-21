@@ -34,10 +34,17 @@ public class Exon implements Interval {
 
     @Override
     public String toString() {
-        return this.start + "-" + this.stop + " " + "[" + this.pos +"] Length:" + this.length;
+        return this.start + "-" + this.stop + " " + "[" + this.pos +"] Length:" + this.length + " → " + getTranscriptId();
     }
     public int getLength() {
         return length;
     }
 
+    public String getTranscriptId() {
+        return transcriptId;
+    }
+
+    public void setTranscriptId(String transcriptId) {
+        this.transcriptId = transcriptId;
+    }
 }

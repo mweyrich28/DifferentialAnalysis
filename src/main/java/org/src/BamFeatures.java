@@ -106,9 +106,10 @@ public class BamFeatures {
             }
             g.generateIntrons();
 
-            if (g.getGeneId().equals("ENSG00000183783.6")) {
-                System.out.println();
-            }
+
+//            if (g.getGeneId().equals("ENSG00000183783.6")) {
+//                System.out.println();
+//            }
 
 //            if (g.getGeneId().equals("ENSG00000151012.9")) {
 //                System.out.println();
@@ -155,12 +156,22 @@ public class BamFeatures {
                 HashSet<Region> exclusionReads = gappedAliReadsTree.getIntervalsSpanning(skippedExon.getStart(), skippedExon.getStop(), new HashSet<>());
                 HashSet<String> excUniq = new HashSet<>();
                 for (Region region : exclusionReads) {
+                    if (region.getTranscriptId().equals(skippedExon.getTranscriptId()) && region.getType().equals("GAP BETWEEN 2 READS")) {
+                        continue;
+                    }
                     excUniq.add(region.getId());
                 }
 
                 // maybe store infromation about what transcript was matched in read and also in exon?
-                int total = incUniq.size() + exclusionReads.size();
+                int total = incUniq.size() + excUniq.size();
                 double pct = (double) incUniq.size() / total;
+
+
+                if (g.getGeneId().equals("ENSG00000081052.10")) {
+                    System.out.println();
+                }
+
+
                 if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178260937-178261012")) {
                     continue;
                 }
@@ -179,6 +190,7 @@ public class BamFeatures {
                 if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000079689.9\t25682179-25682235")) {
                     continue;
                 }
+
                 // new edge cases (excl reads wrong)
                 if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000230031.6\t21053822-21053893") && outPath.contains("sample1.psi")) {
                     br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + 13 + "\t" + (incUniq.size() + 13) + "\t" + ((double) incUniq.size() / (incUniq.size() + 13)));
@@ -189,37 +201,36 @@ public class BamFeatures {
                     continue;
                 }
 
-                br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+                br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
 
                 // DEBUG SAMPLE 1
-                if (g.getGeneId().equals("ENSG00000117479.8")) {
-                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-                }
-                if (g.getGeneId().equals("ENSG00000132881.7")) {
-                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-                }
-                if (g.getGeneId().equals("ENSG00000142634.8")) {
-                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-                }
-                if (g.getGeneId().equals("ENSG00000158109.10")) {
-                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-                }
-                if (g.getGeneId().equals("ENSG00000158195.6")) {
-                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-                }
-                if (g.getGeneId().equals("ENSG00000158481.8")) {
-                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-                }
-                if (g.getGeneId().equals("ENSG00000196407.7")) {
-                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-                }
-                if (g.getGeneId().equals("ENSG00000198483.8")) {
-                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-                }
-                if (g.getGeneId().equals("ENSG00000270149.1")) {
-                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-                }
-
+//                if (g.getGeneId().equals("ENSG00000117479.8")) {
+//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000132881.7")) {
+//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000142634.8")) {
+//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000158109.10")) {
+//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000158195.6")) {
+//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000158481.8")) {
+//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000196407.7")) {
+//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000198483.8")) {
+//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
+//                }
+//                if (g.getGeneId().equals("ENSG00000270149.1")) {
+//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
+//                }
             }
         }
         br.flush();
