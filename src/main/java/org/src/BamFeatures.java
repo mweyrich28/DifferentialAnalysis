@@ -165,6 +165,7 @@ public class BamFeatures {
                 if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000079689.9\t25682179-25682235")) {
                     continue;
                 }
+
                 br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniqCount + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
             }
         }
