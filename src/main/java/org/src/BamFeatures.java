@@ -56,17 +56,12 @@ public class BamFeatures {
             // at this point we already have the read pair
             // get mate
             SAMRecord mate = seenEntries.get(current.getReadName());
-//            ReadPair pair = determineReadPair(mate, current, mate.getMateNegativeStrandFlag());
             ReadPair pair;
             if (mate.getFirstOfPairFlag()) {
                 pair = new ReadPair(mate, current, !mate.getMateNegativeStrandFlag());
             } else {
                 pair = new ReadPair(current, mate, !current.getMateNegativeStrandFlag());
             }
-//            if (mate.getReadName().equals("66592")) { // → should be mapped
-//                System.out.println();
-//            }
-
             int cgenes = pair.getcgenes(genome);
 
             if (cgenes == 0) {
@@ -81,10 +76,6 @@ public class BamFeatures {
             if (nsplit == -1) {
                 continue;
             }
-
-//            if(mate.getReadName().equals("30674"))  {
-//                System.out.println();
-//            }
             ArrayList<Gene> transcriptomicGenes = pair.getTranscriptomicGenes();
             // skip if empty
             if (transcriptomicGenes.isEmpty()) {
@@ -105,37 +96,6 @@ public class BamFeatures {
                 g.invertTranscripts();
             }
             g.generateIntrons();
-
-
-//            if (g.getGeneId().equals("ENSG00000183783.6")) {
-//                System.out.println();
-//            }
-
-//            if (g.getGeneId().equals("ENSG00000151012.9")) {
-//                System.out.println();
-//            }
-
-//            if (g.getGeneId().equals("ENSG00000158109.10")) {
-//                System.out.println();
-//            }
-//            if (g.getGeneId().equals("ENSG00000142634.8")) {
-//                System.out.println();
-//            }
-//            if (g.getGeneId().equals("ENSG00000198483.8")) {
-//                System.out.println();
-//            }
-//            if (g.getGeneId().equals("ENSG00000158195.6")) {
-//                System.out.println();
-//            }
-//            if (g.getGeneId().equals("ENSG00000198483.8")) {
-//                System.out.println();
-//            }
-//            if (g.getGeneId().equals("ENSG00000196407.7")) {
-//                System.out.println();
-//            }
-//            if (g.getGeneId().equals("ENSG00000158195.6")) {
-//                System.out.println();
-//            }
 
             ArrayList<Exon> skippedExons = g.getSkippedExons();
 
@@ -171,7 +131,7 @@ public class BamFeatures {
                 double pct = (double) incUniq.size() / total;
 
 
-                // exons sample1 which shouldn't exist
+                // exons in sample1 which shouldn't exist (but i find them)
                 if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178260937-178261012")) {
                     continue;
                 }
@@ -225,62 +185,5 @@ public class BamFeatures {
         boolean oppStrand = record.getReadNegativeStrandFlag() != record.getMateNegativeStrandFlag();
         boolean paired = record.getReadPairedFlag();
         return isPrimary && isMapped && isMateMapped && sameChr && oppStrand && paired;
-    }
-
-    public ReadPair determineReadPair(SAMRecord mate, SAMRecord current, Boolean frstrand) {
-        // bases on frstrand, getFirstOfPair and getNegativeStrandFlag determine
-        // correct readpair configuration
-        if (frstrand == null) {
-            if (mate.getFirstOfPairFlag()) {
-                return new ReadPair(mate, current, null);
-            } else {
-                return new ReadPair(current, mate, null);
-            }
-        }
-        // fr +
-        else if (frstrand) {
-            // mate first
-            if (mate.getFirstOfPairFlag()) {
-                // curr -
-                if (current.getReadNegativeStrandFlag()) {
-                    return new ReadPair(current, mate, false);
-                }
-                // curr +
-                else {
-                    return new ReadPair(current, mate, true);
-                }
-            } else {
-                // mate -
-                if (mate.getReadNegativeStrandFlag()) {
-                    return new ReadPair(mate, current, false);
-                }
-                // mate +
-                else {
-                    return new ReadPair(mate, current, true);
-                }
-            }
-        }
-        // fr -
-        else {
-            if (mate.getFirstOfPairFlag()) {
-                // mate -
-                if (mate.getReadNegativeStrandFlag()) {
-                    return new ReadPair(mate, current, false);
-                }
-                // mate +
-                else {
-                    return new ReadPair(mate, current, true);
-                }
-            } else {
-                // curr -
-                if (current.getReadNegativeStrandFlag()) {
-                    return new ReadPair(current, mate, false);
-                }
-                // curr +
-                else {
-                    return new ReadPair(current, mate, true);
-                }
-            }
-        }
     }
 }

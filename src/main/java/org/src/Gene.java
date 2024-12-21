@@ -10,19 +10,14 @@ import java.util.*;
 public class Gene implements Interval {
     private final int start;
     private final int end;
-    private int meltedLength = 0;
-
     private final String geneId;
     private final ArrayList<Transcript> transcriptList;
     private final String geneName;
     private final String bioType;
     private final String chr;
     private final char strand;
-    private TreeSet<Region> meltedRegions;
-    private HashSet<SAMRecord> mappedReads = new HashSet<>();
     private final ArrayList<Intron> introns = new ArrayList<>();
     private IntervalTree<Region> mappedAliBlocksTree = null;
-//    private TreeSet<Region> mappedAliBlockSet = new TreeSet<>(Comparator.comparingInt(Region::getStart).thenComparingInt(Region::getStop));
     private ArrayList<Region> mappedAliBlockSet = new ArrayList<>();
     private final IntervalTree<Region> gappedAliBlocksTree = new IntervalTree<>();
     public Gene(String geneId, int start, int end, String geneName, String chr, char strand, String bioType) {
@@ -83,9 +78,6 @@ public class Gene implements Interval {
         return end;
     }
 
-    public int getEnd() {
-        return end;
-    }
     public Transcript getLastTranscript() {
         if (!transcriptList.isEmpty()) {
             return transcriptList.get(transcriptList.size() - 1);
@@ -144,11 +136,6 @@ public class Gene implements Interval {
         return null;
     }
 
-    public void addRead (SAMRecord read) {
-        this.mappedReads.add(read);
-    }
-
-
     public void addReadPairGap(Region fwLastBlock, Region rwFirstBlock) {
         ArrayList<Region> sorted = new ArrayList<>();
         sorted.add(fwLastBlock);
@@ -163,7 +150,7 @@ public class Gene implements Interval {
         }
     }
 
-    public void addAlignedBlocks(TreeSet<Region> blocks) {
+    public void addAlignedBlocks(TreeSet<Region> blocks, String type) {
         if (blocks.size() > 1) {
             int count = 1;
             int gapStart = 0;
@@ -196,7 +183,7 @@ public class Gene implements Interval {
                 Region mappedRead = new Region(r.getId(), r.getStart(), r.getStop());
 
                 mappedRead.setTranscriptId(r.getTranscriptId());
-                mappedRead.setType("MAPPED");
+                mappedRead.setType(type);
                 this.mappedAliBlockSet.add(mappedRead);
             }
         }
@@ -204,7 +191,7 @@ public class Gene implements Interval {
             Region a = blocks.getLast();
             Region mappedRead = new Region(a.getId(), a.getStart(), a.getStop());
             mappedRead.setTranscriptId(a.getTranscriptId());
-            mappedRead.setType("MAPPED");
+            mappedRead.setType(type);
             this.mappedAliBlockSet.add(mappedRead);
         }
     }
@@ -222,10 +209,6 @@ public class Gene implements Interval {
 
     public IntervalTree<Region> getGappedAliBlocksTree() {
         return gappedAliBlocksTree;
-    }
-
-    public HashSet<SAMRecord> getMappedReads() {
-        return mappedReads;
     }
 }
 

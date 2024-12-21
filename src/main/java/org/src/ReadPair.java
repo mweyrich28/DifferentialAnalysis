@@ -17,9 +17,6 @@ public class ReadPair {
     private final ArrayList<Gene> containingGenes = new ArrayList<>();
     private TreeSet<Region> regionVecFw = new TreeSet<>(Comparator.comparingInt(Region::getStart).thenComparingInt(Region::getStop));
     private TreeSet<Region> regionVecRw = new TreeSet<>(Comparator.comparingInt(Region::getStart).thenComparingInt(Region::getStop));
-//    private ArrayList<Region> regionVecFw = new ArrayList<>();
-//    private ArrayList<Region> regionVecRw = new ArrayList<>();
-//    private TreeSet<Region> meltedBlocks;
 
     public ReadPair(SAMRecord fw, SAMRecord rw, Boolean frstrand) {
         this.fwRecord = fw;
@@ -30,27 +27,6 @@ public class ReadPair {
         this.chr = fw.getReferenceName();
         this.id = fw.getReadName();
         melt();
-    }
-
-    public int getmm() {
-        int rwmm = 0;
-        int fwmm = 0;
-        for (String key : MMKEYWORDS) {
-            if (fwRecord.getAttribute(key) != null && (Integer) fwRecord.getAttribute(key) > fwmm) {
-                fwmm = (Integer) fwRecord.getAttribute(key);
-            }
-            if (rwRecord.getAttribute(key) != null && (Integer) rwRecord.getAttribute(key) > rwmm) {
-                rwmm = (Integer) rwRecord.getAttribute(key);
-            }
-        }
-        return fwmm + rwmm;
-    }
-
-    public int getclipping() {
-        return fwRecord.getAlignmentStart() - fwRecord.getUnclippedStart()
-                + fwRecord.getUnclippedEnd() - fwRecord.getAlignmentEnd()
-                + rwRecord.getAlignmentStart() - rwRecord.getUnclippedStart()
-                + rwRecord.getUnclippedEnd() - rwRecord.getAlignmentEnd();
     }
 
     public int getNsplit() {
@@ -150,8 +126,8 @@ public class ReadPair {
             }
 
             // add alignment blocks and their gaps to gene
-            gene.addAlignedBlocks(this.regionVecFw);
-            gene.addAlignedBlocks(this.regionVecRw);
+            gene.addAlignedBlocks(this.regionVecFw, "FW");
+            gene.addAlignedBlocks(this.regionVecRw, "RW");
 
             // also add gap between last region of fw and first region of rw
             Region fwLastBlock = regionVecFw.getLast();
@@ -206,22 +182,6 @@ public class ReadPair {
         }
         return false;
     }
-
-
-    public boolean isAntisense(Genome genome) {
-        ArrayList<Gene> cgenes;
-        // negate frstrand
-        cgenes = genome.getIntervalTreeMap()
-                .get(chr)
-                .get(!frstrand)
-                .getIntervalsSpanning(alignmentStart, alignmentEnd, new ArrayList<>());
-
-        return !(cgenes.isEmpty());
-    }
-
-//    public TreeSet<Region> getMeltedBlocks() {
-//        return this.meltedBlocks;
-//    }
 
     public void melt() {
         // melt all regions fw, rw, and merged)
