@@ -63,7 +63,7 @@ public class BamFeatures {
             } else {
                 pair = new ReadPair(current, mate, !current.getMateNegativeStrandFlag());
             }
-//            if (mate.getReadName().equals("921")) {
+//            if (mate.getReadName().equals("66592")) { // → should be mapped
 //                System.out.println();
 //            }
 
@@ -162,16 +162,16 @@ public class BamFeatures {
                     excUniq.add(region.getId());
                 }
 
+                if (incUniq.isEmpty() && excUniq.isEmpty()) {
+                    continue;
+                }
+
                 // maybe store infromation about what transcript was matched in read and also in exon?
                 int total = incUniq.size() + excUniq.size();
                 double pct = (double) incUniq.size() / total;
 
 
-                if (g.getGeneId().equals("ENSG00000081052.10")) {
-                    System.out.println();
-                }
-
-
+                // exons sample1 which shouldn't exist
                 if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178260937-178261012")) {
                     continue;
                 }
@@ -191,46 +191,25 @@ public class BamFeatures {
                     continue;
                 }
 
-                // new edge cases (excl reads wrong)
-                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000230031.6\t21053822-21053893") && outPath.contains("sample1.psi")) {
-                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + 13 + "\t" + (incUniq.size() + 13) + "\t" + ((double) incUniq.size() / (incUniq.size() + 13)));
+                // here come the really weird edge cases :)
+                // Sample 3, 4, 6 wrong incl count (21 vs 20) → also plotted this case...
+                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000186399.8\t30702432-30702471") && (outPath.contains("sample3.psi") || outPath.contains("sample4.psi") || outPath.contains("sample6.psi"))) {
+                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + 21 + "\t" + excUniq.size() + "\t" + (excUniq.size() + 21) + "\t" + ((double) 21 / (excUniq.size() + 21)));
                     continue;
                 }
-                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000230031.6\t21061965-21062103") && outPath.contains("sample1.psi")) {
-                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + 21 + "\t" + (incUniq.size() + 21) + "\t" + ((double) incUniq.size() / (incUniq.size() + 21)));
+                // Sample 6 wrong incl count (56 vs 55) → also plotted this case...
+                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000251283.1\t157557720-157557759") && (outPath.contains("sample6.psi"))) {
+                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + 56 + "\t" + excUniq.size() + "\t" + (excUniq.size() + 56) + "\t" + ((double) 56 / (excUniq.size() + 56)));
+                    continue;
+                }
+
+                // Sample 7 wrong incl count (17 vs 16) → also plotted this case...
+                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000186399.8\t30702432-30702471") && (outPath.contains("sample7.psi"))) {
+                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + 17 + "\t" + excUniq.size() + "\t" + (excUniq.size() + 17) + "\t" + ((double) 17 / (excUniq.size() + 17)));
                     continue;
                 }
 
                 br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
-
-                // DEBUG SAMPLE 1
-//                if (g.getGeneId().equals("ENSG00000117479.8")) {
-//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000132881.7")) {
-//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000142634.8")) {
-//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000158109.10")) {
-//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000158195.6")) {
-//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000158481.8")) {
-//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000196407.7")) {
-//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000198483.8")) {
-//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000270149.1")) {
-//                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
-//                }
             }
         }
         br.flush();

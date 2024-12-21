@@ -193,13 +193,19 @@ public class Gene implements Interval {
                     gapStart = r.getStop() + 1;
                     count = 1;
                 }
+                Region mappedRead = new Region(r.getId(), r.getStart(), r.getStop());
 
-                this.mappedAliBlockSet.add(new Region(r.getId(), r.getStart(), r.getStop()));
+                mappedRead.setTranscriptId(r.getTranscriptId());
+                mappedRead.setType("MAPPED");
+                this.mappedAliBlockSet.add(mappedRead);
             }
         }
         else { // there is only one alignment block and no gaps
             Region a = blocks.getLast();
-            this.mappedAliBlockSet.add(new Region(a.getId(), a.getStart(), a.getStop()));
+            Region mappedRead = new Region(a.getId(), a.getStart(), a.getStop());
+            mappedRead.setTranscriptId(a.getTranscriptId());
+            mappedRead.setType("MAPPED");
+            this.mappedAliBlockSet.add(mappedRead);
         }
     }
 
