@@ -21,7 +21,7 @@ public class Main {
 
             BamFeatures bam = new BamFeatures(bamPath, gtfPath);
             bam.processBAM();
-            bam.getPctSplicedCunts(out);
+            bam.getPctSplicedCounts(out);
         } catch (ArgumentParserException e) {
             parser.printHelp();
         }

@@ -77,6 +77,7 @@ public class BamFeatures {
                 continue;
             }
 
+
             ArrayList<Gene> transcriptomicGenes = pair.getTranscriptomicGenes();
             // skip if empty
             if (transcriptomicGenes.isEmpty()) {
@@ -86,7 +87,7 @@ public class BamFeatures {
         }
     }
 
-    public void getPctSplicedCunts(String outPath) throws IOException {
+    public void getPctSplicedCounts(String outPath) throws IOException {
         File outFile = new File(outPath);
         File parentDir = outFile.getParentFile();
         parentDir.mkdirs();
@@ -146,7 +147,7 @@ public class BamFeatures {
                 double pct = (double) incUniqCount / total;
 
 
-                // exons in sample1 which shouldn't exist (but i find them)
+                // exons  which shouldn't exist (but i find them)
                 if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178260937-178261012")) {
                     continue;
                 }
