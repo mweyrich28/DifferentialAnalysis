@@ -24,7 +24,7 @@ public class BamFeatures {
         this.samReader.setValidationStringency(SAMFileReader.ValidationStringency.SILENT);
     }
 
-    public void processBAM() throws IOException {
+    public void processBAM() {
         Iterator<SAMRecord> it = samReader.iterator();
         HashMap<String, SAMRecord> seenEntries = new HashMap<>();
         String currentChr = null;
