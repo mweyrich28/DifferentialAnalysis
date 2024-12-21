@@ -2,6 +2,7 @@ package org.src;
 
 import augmentedTree.Interval;
 import augmentedTree.IntervalTree;
+import net.sf.samtools.AlignmentBlock;
 import net.sf.samtools.SAMRecord;
 
 import java.util.*;
@@ -142,64 +143,20 @@ public class Gene implements Interval {
         return null;
     }
 
-
-    public void melt() {
-
-        ArrayList<Exon> allExons = new ArrayList<>();
-        for (Transcript transcript: transcriptList) {
-            allExons.addAll(transcript.getExonList());
-        }
-
-        Collections.sort(allExons, Comparator.comparingInt(Exon::getStart));
-        TreeSet<Region> meltedRegions = new TreeSet<>(
-                Comparator.comparingInt(Region::getStart)
-                        .thenComparingInt(Region::getStop)
-        );
-
-
-        if (!allExons.isEmpty()) {
-            Exon first = allExons.getFirst();
-            Region current = new Region(first.getStart(), first.getStop());
-
-            for (int i = 1; i < allExons.size(); i++) {
-                Exon exon = allExons.get(i);
-
-                if (exon.getStart() <= current.getStop() + 1) {
-                    current.setStop(Math.max(current.getStop(), exon.getStop()));
-                } else {
-                    meltedRegions.add(current);
-                    current = new Region(exon.getStart(), exon.getStop());
-                }
-            }
-
-            meltedRegions.add(current);
-        }
-        this.meltedRegions = meltedRegions;
-    }
-
-    public TreeSet<Region> getMeltedRegions() {
-        if (this.meltedRegions == null) {
-            melt();
-        }
-        return this.meltedRegions;
-    }
-
-    public int getMeltedLength() {
-        // make sure to only calculate once
-        if (this.meltedLength == 0) {
-            TreeSet<Region> meltedRegions = getMeltedRegions();
-            int length = 0;
-            for (Region region : meltedRegions) {
-                length += region.getStop() - region.getStart() - 1;
-            }
-            this.meltedLength = length;
-        }
-        return meltedLength;
-    }
-
     public void addRead (SAMRecord read) {
         this.mappedReads.add(read);
+    }
 
+
+    public void addReadPairGap(Region fwLastBlock, Region rwFirstBlock) {
+        ArrayList<Region> sorted = new ArrayList<>();
+        sorted.add(fwLastBlock);
+        sorted.add(rwFirstBlock);
+        sorted.sort(Comparator.comparingInt((Region::getStart)));
+        if (sorted.getFirst().getStop() < sorted.getLast().getStart()) {
+            Region gap = new Region(sorted.getFirst().getId(), sorted.getFirst().getStop() + 1, sorted.getLast().getStart() - 1);
+            this.gappedAliBlocksTree.add(gap);
+        }
     }
 
     public void addAlignedBlocks(TreeSet<Region> blocks) {
@@ -209,24 +166,33 @@ public class Gene implements Interval {
             int gapEnd;
             for (Region r : blocks) {
                 if (count % 2 != 0) {
-                    gapStart = r.getStop() + 1;
+                    if (gapStart == 0) {
+                        gapStart = r.getStop() + 1;
+                    } else {
+                        gapEnd = r.getStart()-1;
+                        Region gap = new Region(r.getId(), gapStart, gapEnd);
+                        gappedAliBlocksTree.add(gap);
+                        gapStart = r.getStop() + 1;
+
+                    }
                     count++;
                 } else {
                     gapEnd = r.getStart() - 1;
                     Region gap = new Region(r.getId(), gapStart, gapEnd);
                     gappedAliBlocksTree.add(gap);
+                    gapStart = r.getStop() + 1;
                     count = 1;
                 }
 
                 this.mappedAliBlockSet.add(new Region(r.getId(), r.getStart(), r.getStop()));
             }
             // add last gap if block had uneven length
-            if (count == 2) {
-                Region r = blocks.getLast();
-                gapEnd = r.getStart() - 1;
-                Region gap = new Region(r.getId(), gapStart, gapEnd);
-                gappedAliBlocksTree.add(gap);
-            }
+//            if (count == 2) {
+//                Region r = blocks.getLast();
+//                gapEnd = r.getStart() - 1;
+//                Region gap = new Region(r.getId(), gapStart, gapEnd);
+//                gappedAliBlocksTree.add(gap);
+//            }
         }
         else { // theres only one alignment block and no gaps
             Region a = blocks.getLast();

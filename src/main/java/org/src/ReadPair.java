@@ -120,7 +120,7 @@ public class ReadPair {
         ArrayList<Gene> cgenes;
         cgenes = genome.getIntervalTreeMap()
                 .get(this.chr)
-                .get(this.frstrand)
+                .get(this.frstrand) // CHECK IF THIS SHOULD BE NULL
                 .getIntervalsSpanning(this.alignmentStart, this.alignmentEnd, new ArrayList<>());
 
         if (!cgenes.isEmpty()) {
@@ -140,56 +140,24 @@ public class ReadPair {
         return igenes.size();
     }
 
-    public int getgdist(Genome genome) {
-        ArrayList<Gene> leftNeighbors;
-        ArrayList<Gene> rightNeighbors;
-
-        leftNeighbors = genome.getIntervalTreeMap()
-                .get(this.chr)
-                .get(this.frstrand)
-                .getIntervalsLeftNeighbor(this.alignmentStart, this.alignmentEnd, new ArrayList<>());
-        rightNeighbors = genome.getIntervalTreeMap()
-                .get(this.chr)
-                .get(this.frstrand)
-                .getIntervalsRightNeighbor(this.alignmentStart, this.alignmentEnd, new ArrayList<>());
-
-        // min(read start - gene end  or gene start - read end)
-        int minDistance = Integer.MAX_VALUE;
-        for (Gene gene : leftNeighbors) {
-            int distance = alignmentStart - gene.getEnd(); // read start - gene end
-            if (distance > 0) {
-                minDistance = Math.min(minDistance, distance);
-            }
-        }
-
-        for (Gene gene : rightNeighbors) {
-            int distance = gene.getStart() - alignmentEnd; // gene start - read end
-            if (distance > 0) {
-                minDistance = Math.min(minDistance, distance);
-            }
-        }
-
-        if (minDistance == Integer.MAX_VALUE) {
-            return 0;
-        }
-
-        return minDistance - 1;
-    }
-
     public ArrayList<Gene> getTranscriptomicGenes() {
         ArrayList<Gene> transcriptomicGenes = new ArrayList<>();
         // go through all genes
         for (Gene gene : containingGenes) {
-            // check transcriptopmic
+            // check transcriptomic
             if (!isTranscriptomicGene(gene)) {
                 continue;
             }
 
-            // add reads to gene
+            // add alignment blocks and their gaps to gene
             gene.addAlignedBlocks(this.regionVecFw);
             gene.addAlignedBlocks(this.regionVecRw);
-//            gene.addRead(this.fwRecord);
-//            gene.addRead(this.rwRecord);
+
+            // also add gap between last region of fw and first region of rw
+            Region fwLastBlock = regionVecFw.getLast();
+            Region rwFirstBlock = regionVecRw.getLast();
+            gene.addReadPairGap(fwLastBlock, rwFirstBlock);
+
             transcriptomicGenes.add(gene);
         }
 

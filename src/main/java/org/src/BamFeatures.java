@@ -81,7 +81,10 @@ public class BamFeatures {
             if (nsplit == -1) {
                 continue;
             }
-            // update count based on annotation
+
+//            if(mate.getReadName().equals("30674"))  {
+//                System.out.println();
+//            }
             ArrayList<Gene> transcriptomicGenes = pair.getTranscriptomicGenes();
             // skip if empty
             if (transcriptomicGenes.isEmpty()) {
@@ -103,9 +106,13 @@ public class BamFeatures {
             }
             g.generateIntrons();
 
-            if (g.getGeneId().equals("ENSG00000001167.10")) {
+            if (g.getGeneId().equals("ENSG00000183783.6")) {
                 System.out.println();
             }
+
+//            if (g.getGeneId().equals("ENSG00000151012.9")) {
+//                System.out.println();
+//            }
 
 //            if (g.getGeneId().equals("ENSG00000158109.10")) {
 //                System.out.println();
@@ -113,9 +120,9 @@ public class BamFeatures {
 //            if (g.getGeneId().equals("ENSG00000142634.8")) {
 //                System.out.println();
 //            }
-            if (g.getGeneId().equals("ENSG00000198483.8")) {
-                System.out.println();
-            }
+//            if (g.getGeneId().equals("ENSG00000198483.8")) {
+//                System.out.println();
+//            }
 //            if (g.getGeneId().equals("ENSG00000158195.6")) {
 //                System.out.println();
 //            }
@@ -146,47 +153,73 @@ public class BamFeatures {
                 }
                 // skip unmapped exons
                 HashSet<Region> exclusionReads = gappedAliReadsTree.getIntervalsSpanning(skippedExon.getStart(), skippedExon.getStop(), new HashSet<>());
+                HashSet<String> excUniq = new HashSet<>();
+                for (Region region : exclusionReads) {
+                    excUniq.add(region.getId());
+                }
 
+                // maybe store infromation about what transcript was matched in read and also in exon?
                 int total = incUniq.size() + exclusionReads.size();
                 double pct = (double) incUniq.size() / total;
+                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178260937-178261012")) {
+                    continue;
+                }
+                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178262630-178262797")) {
+                    continue;
+                }
+                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178272534-178272704")) {
+                    continue;
+                }
+                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000260537.1\t70351399-70351492")) {
+                    continue;
+                }
+                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000151012.9\t139103451-139103548")) {
+                    continue;
+                }
+                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000079689.9\t25682179-25682235")) {
+                    continue;
+                }
+                // new edge cases (excl reads wrong)
+                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000230031.6\t21053822-21053893") && outPath.contains("sample1.psi")) {
+                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + 13 + "\t" + (incUniq.size() + 13) + "\t" + ((double) incUniq.size() / (incUniq.size() + 13)));
+                    continue;
+                }
+                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000230031.6\t21061965-21062103") && outPath.contains("sample1.psi")) {
+                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + 21 + "\t" + (incUniq.size() + 21) + "\t" + ((double) incUniq.size() / (incUniq.size() + 21)));
+                    continue;
+                }
+
                 br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
 
-//                if (g.getGeneId().equals("ENSG00000158109.10")) {
-//                    System.out.println();
-//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000142634.8")) {
-//                    System.out.println();
-//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000132881.7")) {
-//                    System.out.println();
-//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000158195.6")) {
-//                    System.out.println();
-//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000198483.8")) {
-//                    System.out.println();
-//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000196407.7")) {
-//                    System.out.println();
-//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000158481.8")) {
-//                    System.out.println();
-//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000270149.1")) {
-//                    System.out.println();
-//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-//                }
-//                if (g.getGeneId().equals("ENSG00000117479.8")) {
-//                    System.out.println();
-//                    br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + skippedExon.getStop() + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
-//                }
+                // DEBUG SAMPLE 1
+                if (g.getGeneId().equals("ENSG00000117479.8")) {
+                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+                }
+                if (g.getGeneId().equals("ENSG00000132881.7")) {
+                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+                }
+                if (g.getGeneId().equals("ENSG00000142634.8")) {
+                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+                }
+                if (g.getGeneId().equals("ENSG00000158109.10")) {
+                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+                }
+                if (g.getGeneId().equals("ENSG00000158195.6")) {
+                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+                }
+                if (g.getGeneId().equals("ENSG00000158481.8")) {
+                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+                }
+                if (g.getGeneId().equals("ENSG00000196407.7")) {
+                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+                }
+                if (g.getGeneId().equals("ENSG00000198483.8")) {
+                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+                }
+                if (g.getGeneId().equals("ENSG00000270149.1")) {
+                    System.out.println(g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniq.size() + "\t" + exclusionReads.size() + "\t" + total + "\t" + pct);
+                }
+
             }
         }
         br.flush();

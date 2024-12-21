@@ -6,6 +6,7 @@ public class Region implements Interval {
     private int start;
     private int stop;
     private String id;
+    private String transcriptId;
 
     public Region(int start, int end) {
         this.start = start;
@@ -70,5 +71,13 @@ public class Region implements Interval {
 
     public String getId() {
         return id;
+    }
+
+    public void setTranscriptId(String transcriptId) {
+        this.transcriptId = transcriptId;
+    }
+
+    public String getTranscriptId() {
+        return transcriptId;
     }
 }
