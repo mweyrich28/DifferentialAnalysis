@@ -65,12 +65,8 @@ diff.splicing <- function(psi.files, group) {
   
   results_df <- as.data.frame(t(results))
   colnames(results_df)[1:2] <- c("gene", "exon")
-
-  print(results_df$pvalue)
-  print(any(is.na(results_df$pvalue)))
-  print(any(is.infinite(results_df$pvalue)))
-  print(summary(results_df$pvalue))
-  results_df$padj <- round(p.adjust(results_df$pvalue, method = "BH"), 3)
+  results_df$pvalue <- as.numeric(as.character(results_df$pvalue))
+  results_df$padj <- p.adjust(results_df$pvalue, method = "BH")
   
   return(results_df)
 }
