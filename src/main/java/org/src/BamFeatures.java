@@ -93,13 +93,17 @@ public class BamFeatures {
         parentDir.mkdirs();
         BufferedWriter br = new BufferedWriter(new FileWriter(outFile));
         br.write("gene\texon\tnum_incl_reads\tnum_excl_reads\tnum_total_reads\tpsi");
-        for (Gene g : mappedGenes) {
-            if (g.getStrand() == '-') {
-                g.invertTranscripts();
-            }
-            g.generateIntrons();
 
-            ArrayList<Exon> skippedExons = g.getSkippedExons();
+        for (Gene g : mappedGenes) {
+
+            if (g.getStrand() == '-') {
+//                g.invertTranscripts();
+                g.invertTranscriptsCds();
+            }
+//            g.generateIntrons();
+            g.generateCDSIntrons();
+//            ArrayList<Exon> skippedExons = g.getSkippedExons();
+            ArrayList<Region> skippedExons = g.getSkippedCds();
 
             if (skippedExons == null) {
                 continue;
@@ -108,16 +112,16 @@ public class BamFeatures {
             IntervalTree<Region> mappedAliReadsTree = g.getMappedAliBlocksTree();
             IntervalTree<Region> gappedAliReadsTree = g.getGappedAliBlocksTree();
 
-
-            for (Exon skippedExon : skippedExons) {
+//            for (Exon skippedExon : skippedExons) {
+            for (Region skippedExon : skippedExons) {
                 ArrayList<Region> inclusionReads = mappedAliReadsTree.getIntervalsSpannedBy(skippedExon.getStart(), skippedExon.getStop(), new ArrayList<>());
                 HashSet<String> incUniq = new HashSet<>();
-                int incUniqCount = 0;
                 for (Region region : inclusionReads) {
                     incUniq.add(region.getId());
                 }
 
-                incUniqCount = incUniq.size();
+                int incUniqCount = incUniq.size();
+
                 // skip unmapped exons
                 HashSet<Region> exclusionReads = gappedAliReadsTree.getIntervalsSpanning(skippedExon.getStart(), skippedExon.getStop(), new HashSet<>());
                 HashSet<String> excUniq = new HashSet<>();
@@ -141,31 +145,30 @@ public class BamFeatures {
                     continue;
                 }
 
-
-                // maybe store infromation about what transcript was matched in read and also in exon?
                 int total = incUniqCount + excUniq.size();
                 double pct = (double) incUniqCount / total;
 
-
                 // exons  which shouldn't exist (but i find them)
-                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178260937-178261012")) {
-                    continue;
-                }
-                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178262630-178262797")) {
-                    continue;
-                }
-                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178272534-178272704")) {
-                    continue;
-                }
-                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000260537.1\t70351399-70351492")) {
-                    continue;
-                }
-                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000151012.9\t139103451-139103548")) {
-                    continue;
-                }
-                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000079689.9\t25682179-25682235")) {
-                    continue;
-                }
+                // FIXED: Problem was that I also used the exon coordinates to determine the skipped exons.
+                // Now I use cds for skippedExonEvents and from there on I use exon coordinates
+//                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178260937-178261012")) {
+//                    continue;
+//                }
+//                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178262630-178262797")) {
+//                    continue;
+//                }
+//                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000109674.3\t178272534-178272704")) {
+//                    continue;
+//                }
+//                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000260537.1\t70351399-70351492")) {
+//                    continue;
+//                }
+//                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000151012.9\t139103451-139103548")) {
+//                    continue;
+//                }
+//                if ((g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1)).equals("ENSG00000079689.9\t25682179-25682235")) {
+//                    continue;
+//                }
 
                 br.write("\n" + g.getGeneId() + "\t" + skippedExon.getStart() + "-" + (skippedExon.getStop() + 1) + "\t" + incUniqCount + "\t" + excUniq.size() + "\t" + total + "\t" + pct);
             }

@@ -8,10 +8,16 @@ public class Region implements Interval {
     private String id;
     private String transcriptId;
     private String type = null;
+    private int pos;
 
     public Region(int start, int end) {
         this.start = start;
         this.stop = end;
+    }
+    public Region(int start, int end, int pos) {
+        this.start = start;
+        this.stop = end;
+        this.pos = pos;
     }
 
     public Region(String id, int start, int end) {
@@ -41,6 +47,13 @@ public class Region implements Interval {
     @Override
     public String toString() {
         return getId() + ": " + getStart() + "-" + getStop() + " → " + getTranscriptId() + " → " + getType();
+    }
+    public int getPos() {
+        return pos;
+    }
+
+    public void setPos(int pos) {
+        this.pos = pos;
     }
 
     @Override

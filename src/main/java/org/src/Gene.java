@@ -46,12 +46,33 @@ public class Gene implements Interval {
         }
     }
 
+    public void generateCDSIntrons() {
+        for (Transcript transcript : transcriptList) {
+            for (int i = 0; i < transcript.getCdsList().size() - 1; i++) {
+                int intronStart = transcript.getCdsList().get(i).getStop() + 1;
+                int intronEnd = transcript.getCdsList().get(i + 1).getStart() - 1;
+                Intron intron = new Intron(intronStart, intronEnd);
+                introns.add(intron);
+            }
+        }
+    }
+
     public void invertTranscripts() {
         for (int i = 0; i < transcriptList.size(); i++) {
             Transcript currTranscript = transcriptList.get(i);
             currTranscript.reversExonList();
             for (int j = 0; j < currTranscript.getExonList().size(); j++) {
                 currTranscript.getExonList().get(j).setPos(j);
+            }
+        }
+    }
+
+    public void invertTranscriptsCds() {
+        for (int i = 0; i < transcriptList.size(); i++) {
+            Transcript currTranscript = transcriptList.get(i);
+            currTranscript.reversCdsList();
+            for (int j = 0; j < currTranscript.getCdsList().size(); j++) {
+                currTranscript.getCdsList().get(j).setPos(j);
             }
         }
     }
@@ -136,6 +157,49 @@ public class Gene implements Interval {
         return null;
     }
 
+
+    public ArrayList<Region> getSkippedCds() {
+        // store events here
+        ArrayList<Region> skippedCds = new ArrayList<>();
+        boolean atLeastOneWT = false;
+        // for every intron check every transcript
+        for (Intron intron : introns) {
+            int intronStart = intron.getStart();
+            int intronEnd = intron.getEnd();
+
+            for (Transcript currTranscript : transcriptList) {
+                // get relevant HashMaps and check if currTranscript has cds starting or ending at i_s i_e
+                HashMap<Integer, Region> cdsEnds = currTranscript.getCdsEnds();
+                HashMap<Integer, Region> cdsStarts = currTranscript.getCdsStarts();
+
+                boolean hasExonInFront = cdsEnds.containsKey(intronStart - 1);
+                boolean hasExonBehind = cdsStarts.containsKey(intronEnd + 1);
+
+                if (hasExonInFront && hasExonBehind) {
+                    Region frontRegion = cdsEnds.get(intronStart - 1);
+                    Region  behindRegion = cdsStarts.get(intronEnd + 1);
+
+                    // get offset / look if there are exons inbetween
+                    int offset = behindRegion.getPos() - frontRegion.getPos();
+
+                    if (offset != 1) {
+                        atLeastOneWT = true;
+                        ArrayList<Region> cdsList = currTranscript.getCdsList();
+                        for (int i = frontRegion.getPos(); i < behindRegion.getPos(); i++) {
+                            if (i > frontRegion.getPos() && i < behindRegion.getPos()) {
+                                cdsList.get(i).setTranscriptId(currTranscript.getTranscriptId());
+                                skippedCds.add(cdsList.get(i));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+        if (atLeastOneWT) {
+            return skippedCds;
+        }
+        return null;
+    }
     public void addReadPairGap(Region fwLastBlock, Region rwFirstBlock) {
         ArrayList<Region> sorted = new ArrayList<>();
         sorted.add(fwLastBlock);

@@ -91,6 +91,7 @@ public class Genome {
         // sanity check vars
         Gene lastGene = null;
         int exonCounter = 0;
+        int cdsCounter = 0;
 
         BufferedReader buff = new BufferedReader(new FileReader(pathToGtf));
         String line;
@@ -154,18 +155,28 @@ public class Genome {
 
                 // reset counter
                 exonCounter = 0;
+                cdsCounter= 0;
             }
             // add exon to last transcript
             else if (mainComponents[2].equals("exon")) {
                 int start = Integer.parseInt(mainComponents[3]);
                 int end = Integer.parseInt(mainComponents[4]);
-                String id = mainComponents[4];
                 lastGene.getLastTranscript().addExon(
                         start,
                         end,
                         exonCounter
                 );
                 exonCounter++;
+            }
+            else if (mainComponents[2].equals("CDS")) {
+                int start = Integer.parseInt(mainComponents[3]);
+                int end = Integer.parseInt(mainComponents[4]);
+                lastGene.getLastTranscript().addCds(
+                        start,
+                        end,
+                        cdsCounter
+                );
+                cdsCounter++;
             }
         }
     }

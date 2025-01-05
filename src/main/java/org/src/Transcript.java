@@ -12,6 +12,10 @@ public class Transcript {
     private final ArrayList<Exon> exonList = new ArrayList<>();
     private final HashMap<Integer, Exon> exonStarts = new HashMap<>();
     private final HashMap<Integer, Exon> exonEnds = new HashMap<>();
+
+    private final ArrayList<Region> cdsList = new ArrayList<>();
+    private final HashMap<Integer, Region> cdsStarts = new HashMap<>();
+    private final HashMap<Integer, Region> cdsEnds = new HashMap<>();
     private final char strand;
     private String transcriptSeq; // patched together using its exons
     public Transcript(String transcriptId, char strand, int start, int stop) {
@@ -22,10 +26,17 @@ public class Transcript {
     }
 
     public void addExon(int start, int end, int pos) {
-        Exon exon = new Exon(start, end, pos, end - start + 1);
+        Exon exon = new Exon(start, end, pos, end - start + 1, this.transcriptId);
         exonList.add(exon);
         exonStarts.put(start, exon);
         exonEnds.put(end, exon);
+    }
+
+    public void addCds(int start, int end, int pos) {
+        Region cds = new Region(start, end, pos);
+        cdsList.add(cds);
+        cdsStarts.put(start, cds);
+        cdsEnds.put(end, cds);
     }
 
     public String getTranscriptId() {
@@ -46,6 +57,9 @@ public class Transcript {
 
     public void reversExonList() {
         Collections.reverse(this.exonList);
+    }
+    public void reversCdsList() {
+        Collections.reverse(this.cdsList);
     }
 
     public ArrayList<Region> cut(int x1, int x2) {
@@ -122,5 +136,17 @@ public class Transcript {
             }
         }
         return cutRegions;
+    }
+
+    public ArrayList<Region> getCdsList() {
+        return cdsList;
+    }
+
+    public HashMap<Integer, Region> getCdsEnds() {
+        return cdsEnds;
+    }
+
+    public HashMap<Integer, Region> getCdsStarts() {
+        return cdsStarts;
     }
 }

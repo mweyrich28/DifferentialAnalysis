@@ -8,9 +8,11 @@ public class Exon implements Interval {
     private final int stop;
     private int pos;
     private String transcriptId;
+    private String oriID; // for debugging
 
-    public Exon(int start, int end, int pos, int length) {
+    public Exon(int start, int end, int pos, int length, String ori) {
         this.length = length;
+        this.oriID = ori;
         this.start = start;
         this.stop = end;
         this.pos = pos;
@@ -34,7 +36,7 @@ public class Exon implements Interval {
 
     @Override
     public String toString() {
-        return this.start + "-" + this.stop + " " + "[" + this.pos +"] Length:" + this.length + " → " + getTranscriptId();
+        return this.oriID + ": " + this.start + "-" + this.stop + " " + "[" + this.pos +"] Length:" + this.length + " → " + getTranscriptId();
     }
     public int getLength() {
         return length;
