@@ -19,6 +19,8 @@
 gro\ss en Einfluss auf regulatorische Prozesse und Genprodukte.
 Dabei werden die \textit{Exons} eines Transkripts teilweise übersprungen oder neu angeordnet. 
 Verantwortlich für diesen Prozess ist das \textit{Splei\ss osom}. 
+Die Identifizierung von \textit{differentiellen Spleiß-Events}, also Unterschieden im \textit{Spleißverhalten} zwischen verschiedenen Bedingungen,
+ist entscheidend für das Verständnis von Genregulation und Krankheitsmechanismen.
 Im Folgenden wird ein Programm zur Quantifizierung von \textit{Skipped Exon Events} vorgestellt und
 dessen Ergebnisse mit einem Hypothesen Test evaluiert. 
 Es wurde auf zehn \textit{bam}-Dateien ausgeführt mit \textit{annotation\_b37.gtf}
@@ -260,9 +262,11 @@ anschlie\ss ende Zählen der \textit{IRC} und \textit{ERC} (B).
         Für das konsekutive Einfügen von \textit{Reads} aus $R_{g}$ in $A$ ergibt sich folgende, von 
         oben abgeschätzte Laufzeit:
         \begin{align*}
-            1  + \log(1) + \log(2) + \dots + \log(|R_{g}| - 1) &< \sum^{|R_{g}|} \log (|R_{g}|) \\
-                                                               &\in \mathcal{O}\Big(|R_{g}| \cdot \log(|R_{g}|)\Big)
+            1  + \log(1) + \log(2) + \dots + \log(|R_{g}| + k) &< \sum^{|R_{g}| + k} \log (|R_{g}| + k) \\
+                                                               &\in \mathcal{O}\Big((|R_{g}| + k) \cdot \log(|R_{g}| + k)\Big)
         \end{align*}
+        Bei $k$ handelt es sich um eine Konstante, welche die Anzahl an Fällen beschreibt,
+        wo ein einzelner \textit{Read} aus $R_{g}$ aus mehreren \textit{AlignmentBlocks} besteht.
 
         Das gleiche gilt für die \textit{Gaps}, welche in den zweiten Intervallbaum eingefügt werden:
         \begin{align*}
@@ -270,17 +274,20 @@ anschlie\ss ende Zählen der \textit{IRC} und \textit{ERC} (B).
                                                            &\in \mathcal{O}\Big((|R_{g}|/2 +c) \cdot \log(|R_{g}|/2 + c)\Big) \\
                                                            &\in \mathcal{O}\Big((|R_{g}| + c) \cdot \log(|R_{g}| + c)\Big)
         \end{align*}
-        Da es sich um \textit{paired end} Daten handelt (Abbildung \ref{fig:PSI-Mapping-png}), gibt es zwischen jedem \textit{Read Pair} einen \textit{Gap}
-        (also insgesamt $|R_{g}|/2$) und zusätzlich $c$ viele \textit{Gaps} zwischen den jeweiligen
-        \textit{AlignmentBlocks} der \textit{Reads}.
+        Da es sich um \textit{paired end} Daten handelt (Abbildung \ref{fig:PSI-Mapping-png}), gibt es zwischen nicht überlappenden \textit{Read Pairs} einen \textit{Gap}
+        (also insgesamt $\le |R_{g}|/2$) und zusätzlich $c$ viele \textit{Gaps} zwischen den jeweiligen
+        \textit{AlignmentBlocks} der \textit{Reads} (\textbf{hierbei ist} $\mathbf{c == k}$, \textbf{da durch jeden zusätzlichen \textit{AlignmentBlock} 
+        in einem \textit{Read} auch ein zusätzlicher \textit{Gap} im \textit{Read} existiert}).
 
         Da wir insgesamt $|G|$ viele Gene haben also:
-        \[
-            \mathcal{O}\Bigg(|G| \cdot \Big(|R_{\tilde g}| \cdot \log(|R_{\tilde g}|) + (|R_{\tilde g}|+c) \cdot \log(|R_{\tilde g}| + c)\Big)\Bigg)
-        \]
+        \begin{align*}
+            \mathcal{O}\Bigg(|G| \cdot \Big((|R_{\tilde g}| + k) \cdot \log(|R_{\tilde g}| + k) &+ (|R_{\tilde g}|+c) \cdot \log(|R_{\tilde g}| + c)\Big)\Bigg)\\
+            \in \mathcal{O}\Bigg(|G| \cdot \Big(2 \cdot (|R_{\tilde g}| + k) \cdot \log(|R_{\tilde g}| &+ k)\Big)\Bigg)\\
+            \in \mathcal{O}\Bigg(|G| \cdot \Big((|R_{\tilde g}| + k) \cdot \log(|R_{\tilde g}| &+ k)\Big)\Bigg)\\
+        \end{align*}
         , wobei 
         \[
-            \tilde g := \operatornamewithlimits\forall_{R_{g} \in R, R_{g} \not =  R_{\tilde g}} R_{g} \le R_{\tilde g}
+            \tilde g := \operatornamewithlimits\forall_{\substack{R_{g} \in R,\\R_{g} \not =  R_{\tilde g}}} R_{g} \le R_{\tilde g}
         \]
         das Gen mit den meisten alignierten \textit{Reads} ist.
 
@@ -319,12 +326,124 @@ aligniert.
 Die Abbildung wurde mit \cite{biorender} erstellt}
     \label{fig:-figures-EdgeCase-png}
 \end{figure}
-
+\newpage
 \section{Ergebnisse}\label{sec:Ergebnisse}
+\subsection{\textit{Read} Abdeckung}\label{sec:-textit-Read-Abdeckung}
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.7\textwidth]{./plots/trees.png}
+    \caption{Verteilung der Anzahl von abgespeicherten Intervalle der Bäume $A$, $B$ pro Gen.
+    Dabei beinhaltet Typ $A$ jeweils alle abdeckenden \textit{AlignmentBlocks}/\textit{Reads} für ein Gen und $B$ die \textit{Gaps} zwischen
+    \textit{AlignmentBlocks} eines \textit{Reads} und zwischen \textit{Forward} und \textit{Reverse Read}.}
+    \label{fig:-plots-trees-png}
+\end{figure}
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./plots/genetrees.png}
+    \caption{Anzahl an Intervallen pro Gen pro Intervallbaum.}
+    \label{fig:-plots-genetrees-png}
+\end{figure}
+Wie bereits in Abschnitt \ref{sec:Komplexität} beschrieben, sollte die Anzahl an Intervallen pro Gen in Baum $B$ nicht 
+grö\ss er als in $A$ sein. Die Verteilungen in Abbildung \ref{fig:-plots-trees-png} lassen dies bereits vermuten, da die Verteilung der Werte für 
+$B$ ungefähr um den Faktor $0.5$ nach links verschoben ist.
+Ebenfalls zusehen ist, dass die Hälfte aller Gene mindesten 308 alignierte \textit{AlignmentBlocks}.
+
+In Abbildung \ref{fig:-plots-genetrees-png} ist es deutlicher zu erkennen, 
+dass die Mengen $|R_{g}|$ in Bäumen $A$ immer grö\ss er ist als die Anzahl an
+\textit{Gaps} in $B$.
+Ebenfalls zu sehen ist , dass es einige Gene mit vielen überlappenden
+\textit{Forward} und \textit{Reverse Reads} gibt. Dies ist der Fall wenn Baum $A$ mehr als doppelt so viele 
+Intervalle beinhaltet als Baum $B$.
+
+
+
+
+
 \subsection{PSI Werte}
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.7\textwidth]{./plots/neg_log10_padj_by_chromosome.png}
+    \caption{Angepasste P-Werte nach Chromosomen. Die Rote Linie kennzeichnet das transformierte Signifikanzniveau von $\mathbf{\alpha = 0.05}$.
+    Alle Punkte über der Indikatorlinie sind als signifikant zu interpretieren. Insgesamt wurden 232 \textit{Exon Skipping Events} entdeckt.}
+    \label{fig:neg_log10_padj_by_chromosome-png}
+\end{figure}
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.7\textwidth]{./plots/prob.png}
+    \caption{Verteilung der $p_{0}$, $p_{1}$ und $p_{2}$ Werte für das $\mathbf{\Psi_{reduced}}$ und $\mathbf{\Psi_{full}}$ Modell.}
+    \label{fig:prob-png}
+\end{figure}
+
+In Abbildung \ref{fig:neg_log10_padj_by_chromosome-png} wurden die korrigierten, logarithmierten P-Werte nach chromosomaler Position
+aufgetragen. Der Gro\ss teil an signifikanten Werten liegt in den 
+Chromosomen 1-9, was darauf hindeuten könnte, dass die \textit{Exon Inklusion} innerhalb
+dieser Regionen durch regulatorische Elemente wie z.B. \textit{Promotoren}, \textit{Enhancern} oder \textit{Silencer}
+gesteuert wird. Der Trend könnte ebenfalls implizieren, dass die Gene auf denn ersten 
+neun Chromosomen anfälliger für Alternatives Splei\ss en sind, da sie beispielsweise für 
+wichtige Splei\ss varianten codieren.
+
+Abbildung \ref{fig:prob-png} zeigt die Verteilung der Wahrscheinlichkeiten $p_{0}, p_{1}$ und $p_{2}$, welche 
+jeweils mit den \textit{Likelihood Schätzern} pro Event errechnet worden sind. Hier ist bereits 
+ein Unterschied zwischen dem $\mathbf{\Psi_{reduced} \sim }(p_{0})$ und dem $\mathbf{\Psi_{full} \sim} (p_{1}, p_{2})$
+zu sehen, da die 
+da die $p_{0}$-Verteilung eine einzelne, konzentrierte Wahrscheinlichkeitsverteilung zeigt,
+während das vollständige Modell zwei separate Verteilungen ($p_{1}$ und $p_{2}$) mit unterschiedlichen
+Maxima aufweist.
+
+
+
 \subsection{Vergleich mit DEXSeq}
+Um unsere Ergebnisse mit \textit{DEXSeq} zu vergleichen, haben wir die selben zehn
+\textit{bam}-Dateien für das Tool aufbereitet und als Eingabe verwendet.
+Die resultierenden Exons wurden zurück auf die von uns verwendete Annotationsdatei 
+projiziert, um sie mit den Ergebnissen unseres Modells vergleichen zu können.
+Für beide Tools wurde in Abbildung \ref{fig:roc_comparison-png} die
+\textit{"Receiver Operating Characteristics" (ROC)} Kurve aufgetragen.
+
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.6\textwidth]{./plots/roc_comparison.png}
+    \caption{ROC Kurven Vergleich mit \textit{DEXseq}.}
+    \label{fig:roc_comparison-png}
+\end{figure}
+
+Die \textit{ROC-Kurven} zeigen einen deutlichen Leistungsunterschied zwischen 
+unserem \textit{JAR LRS} Modell und \textit{DEXSeq}. Unser Modell erreicht einen \textit{AUC}-Wert von $0.855$, während
+\textit{DEXSeq} einen niedrigeren \textit{AUC}-Wert von $0.677$ aufweist (kaum besser als ein
+Zufälliges Modell mit \textit{AUC} = 0.5).
+Dies deutet auf eine überlegene Diskriminierungsfähigkeit des \textit{JAR LRS} Modells hin.
+Der steilere Anstieg der roten Kurve im linken Bereich des Diagramm bedeutet,
+dass unser Modell eine höhere \textit{True Positive Rate} bei einer niedrigeren \textit{False Positive Rate} erreicht 
+- eine wichtige Eigenschaft für die praktische Anwendung, da sie auf
+eine bessere Fähigkeit hinweist, tatsächliche differentielle Spleiß-Events zu erkennen,
+während gleichzeitig weniger falsch-positive Ergebnisse produziert werden.
+
 \subsection{Laufzeit}
 % ------------------------------------------------------------------------------
+
+\begin{figure}[htpb]
+    \centering
+    \includegraphics[width=0.8\textwidth]{./plots/time.png}
+    \caption{Durchschnittliche Laufzeit der \textit{JAR} auf allen Dateien nach zehnfacher Ausführung auf \textit{AMD Ryzen 7 PRO 4750U with Radeon Graphics (16) @ 1.700GHz}.}
+    \label{fig:-plots-time-png}
+\end{figure}
+
+Die Laufzeiten in Abbildung \ref{fig:-plots-time-png} sind alle knapp über einer Sekunde. Das
+liegt aber vor allem daran, dass die \textit{GTF}-Datei für diese Aufgabe manuell überarbeitet wurde,
+sodass jedes Gen höchstens zwei Transkripte besitzt. Dadurch ist die gekürzte Version nur
+$24MB$ gro\ss . Das Einlesen der \textit{GTF}- und das Prozessieren der \textit{bam}-Dateien
+nimmt am meisten Zeit in Anspruch: $323ms$ für das Einlesen der \textit{Annotation} und 800ms 
+für das \textit{Mapping} einer \textit{bam}-Datei auf die Gene in der \textit{GTF}.
+Die Methode \textit{\textbf{getPctSplicedCounts}} ist zuständig für die: 
+\begin{itemize}
+    \item Identifizierung von \textit{Exon Skipping Events}
+    \item Berechnung der \textit{PSI} Werte
+\end{itemize}
+Sie benötigt lediglich $68ms$, da es insgesamt nur $199$ Gene in \textit{mappedGenes} gab uns nur 232 \textit{Exon Skipping Events} 
+durch die Annotationsdatei impliziert werden.
+
 
 
 
